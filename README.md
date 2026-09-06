@@ -3,6 +3,24 @@
 RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식을 분석하여 EdgeTX 조종기용 Lua 인터페이스로 구현한 프로젝트입니다. 가능한 한 많은 Configurator 기능을 PC 없이 조종기에서 확인하고 설정할 수 있도록 만드는 것이 목표입니다.
 
 현재 버전은 **0.6.33 BETA**입니다. 비행장에서 PC가 없을 때 설정값과 상태를 확인하는 보조 용도가 적당합니다.
+## 설치 조건
+
+현재 설치와 동작을 확인한 조건은 아래 조합으로 한정됩니다.
+
+| 항목 | 현재 확인 조건 |
+|---|---|
+| 조종기 | RadioMaster TX16S MK3 |
+| 조종기 운영체제 | 해당 조종기에서 현재 사용 중인 EdgeTX 환경 |
+| FC | NEXUS Gyro |
+| FC 펌웨어 | 현재 사용 중인 Rotorflight 4.6.x 계열 |
+| 비교 기준 | Rotorflight Configurator 2.3.0 |
+| 화면 | TX16S MK3의 800 × 480 컬러 터치 화면 기준 |
+| 통신 | 수신기 텔레메트리를 통한 MSP 통신이 정상적으로 구성된 모델 |
+| SD 카드 경로 | `/SCRIPTS/RFLUASETUP` |
+
+다른 EdgeTX 조종기, 화면 크기, FC, 수신기, 텔레메트리 방식과 펌웨어 버전은 아직 검증하지 않았습니다. 조건이 다르면 화면 배치, MSP 데이터 읽기, 실시간 갱신 또는 저장 기능이 정상적으로 동작하지 않을 수 있습니다.
+
+설치 전에는 PC용 Rotorflight Configurator에서 FC 설정을 `dump` 또는 `diff`로 백업해야 합니다. 조종기 Lua를 사용할 때는 PC Configurator의 FC 연결을 종료하는 것을 권장합니다.
 
 ## 검증 범위
 
@@ -32,6 +50,17 @@ RFLUASETUP is an EdgeTX transmitter Lua interface developed from the menus and c
 This is an unfinished **0.6.33 BETA** build created through one day of focused development. Testing has so far confirmed only that edited values can be transferred to the FC. It is best suited for checking settings and status at the flying field when a PC is unavailable.
 
 The current test target is RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware. Other hardware and firmware combinations are not guaranteed.
+### Installation Requirements
+
+- RadioMaster TX16S MK3
+- The currently tested EdgeTX environment on that transmitter
+- NEXUS Gyro
+- The currently tested Rotorflight 4.6.x firmware
+- Rotorflight Configurator 2.3.0 as the comparison reference
+- Working receiver telemetry and MSP communication
+- Installation path `/SCRIPTS/RFLUASETUP`
+
+Other transmitters, display sizes, FCs, receivers, telemetry protocols, and firmware versions remain unverified. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
 
 See [English installation](INSTALL-EN.txt) and the [English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx).
 
