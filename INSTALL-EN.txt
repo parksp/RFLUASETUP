@@ -1,0 +1,24 @@
+RFLUASETUP 0.6.33 BETA Installation
+==================================
+
+RFLUASETUP is an unfinished BETA tool developed from the menus and workflow of Rotorflight Configurator 2.3.0. It aims to make as much of the Configurator as practical available through a transmitter Lua interface.
+
+Current scope
+- Best suited for checking settings and status at the flying field when a PC is unavailable.
+- Created through one day of focused development.
+- Testing has so far confirmed only that edited values can be transferred to the FC.
+- Current test target: RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware.
+- Other radios, screen sizes, FCs, and firmware versions are not guaranteed.
+
+Installation
+1. Back up the transmitter SD card and the FC configuration.
+2. Extract the distribution ZIP on a PC.
+3. Copy the SCRIPTS folder inside SD-CARD to the root of the transmitter SD card.
+4. Verify /SCRIPTS/RFLUASETUP/main.lua.
+5. Replace the complete old RFLUASETUP folder. Do not mix release files.
+6. Restart EdgeTX and open RFLUASETUP from the system or TOOLS page.
+7. Confirm FC LINK and v0.6.33 BETA.
+
+Use entirely at your own judgment and responsibility. Compare values with Rotorflight Configurator 2.3.0 and bench-test all flight functions before flying.
+
+Created by BLADE PARK
