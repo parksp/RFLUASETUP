@@ -1,8 +1,21 @@
 # RFLUASETUP
 
+[한국어](#rfluasetup) · [English](#english)
+
 RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식을 분석하여 EdgeTX 조종기용 Lua 인터페이스로 구현한 프로젝트입니다. 가능한 한 많은 Configurator 기능을 PC 없이 조종기에서 확인하고 설정할 수 있도록 만드는 것이 목표입니다.
 
 현재 버전은 **0.6.33 BETA**입니다. 비행장에서 PC가 없을 때 설정값과 상태를 확인하는 보조 용도가 적당합니다.
+## 조종기 실제 화면 / Actual Radio Screens
+
+아래 사진은 RadioMaster TX16S MK3에서 RFLUASETUP 0.6.33 BETA를 실행한 실제 화면입니다.
+
+| 메인 화면 / Main screen | 연결 상태 화면 / Connected screen |
+|---|---|
+| <img src="docs/images/radio-main-01.jpg" alt="RFLUASETUP main screen on TX16S MK3" width="520"> | <img src="docs/images/radio-main-02.jpg" alt="RFLUASETUP connected screen on TX16S MK3" width="520"> |
+
+| MIXER OVERRIDE EASY | FULL SETUP |
+|---|---|
+| <img src="docs/images/radio-mixer-override.jpg" alt="Mixer Override Easy screen" width="520"> | <img src="docs/images/radio-full-setup.jpg" alt="Full Setup menu" width="520"> |
 ## 설치 조건
 
 현재 설치와 동작을 확인한 조건은 아래 조합으로 한정됩니다.
@@ -87,3 +100,5 @@ Created by **BLADE PARK**. This independent Lua project is based on the behavior
 ## License
 
 Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
+
+
