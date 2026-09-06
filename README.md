@@ -9,9 +9,9 @@ RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식�
 
 아래 사진은 RadioMaster TX16S MK3에서 RFLUASETUP 0.6.33 BETA를 실행한 실제 화면입니다.
 
-| 메인 화면 / Main screen | 연결 상태 화면 / Connected screen |
+| 메인 화면 / Main screen | 3D 헬리콥터 자세 / 3D Helicopter Attitude |
 |---|---|
-| <img src="docs/images/radio-main-01.jpg" alt="RFLUASETUP main screen on TX16S MK3" width="520"> | <img src="docs/images/radio-main-02.jpg" alt="RFLUASETUP connected screen on TX16S MK3" width="520"> |
+| <img src="docs/images/radio-main-01.jpg" alt="RFLUASETUP main screen on TX16S MK3" width="520"> | <img src="docs/images/radio-3d-attitude.jpg" alt="Live 3D helicopter attitude screen on TX16S MK3" width="520"> |
 
 | MIXER OVERRIDE EASY | FULL SETUP |
 |---|---|
@@ -100,5 +100,6 @@ Created by **BLADE PARK**. This independent Lua project is based on the behavior
 ## License
 
 Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
+
 
 
