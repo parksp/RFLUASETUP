@@ -20,6 +20,20 @@ RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식�
 **TX16S MK2:** 사용자가 잠깐 실행·동작을 확인했으며 적용 가능한 것으로 보인다고 보고했습니다. 짧은 확인에 한정되며 전체 기능·안전성·장기간 운용 검증은 아직 아닙니다.
 ## 조종기 실제 화면 / Actual Radio Screens
 
+### Easy Setup — 0.6.91 BETA
+
+사용자가 제공한 0.6.91 BETA 실제 조종기 화면입니다. Easy Setup은 서보 센터 설정까지 구현된 미완성 중간 단계입니다. 사진에 표시된 펄스값은 해당 기체의 예시이며 권장 설정값이 아닙니다.
+
+User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup remains unfinished, implemented through servo center setup. Pulse values shown belong to the photographed setup; they are not recommended defaults.
+
+| FC 장착 방향 / FC mounting direction | 서보 리버스·센터 펄스 트림 / Servo reverse & center-pulse trim |
+|---|---|
+| <a href="docs/images/easy-fc-mounting-0.6.91.jpg"><img src="docs/images/easy-fc-mounting-0.6.91.jpg" alt="Easy Setup 0.6.91 actual FC mounting direction screen" width="520"></a> | <a href="docs/images/easy-servo-center-0.6.91.jpg"><img src="docs/images/easy-servo-center-0.6.91.jpg" alt="Easy Setup 0.6.91 actual servo reverse and center-pulse trim screen" width="520"></a> |
+
+사진을 클릭하면 원본 크기로 볼 수 있습니다. / Click a photo to view the original.
+
+### 이전 화면 / Earlier screens — 0.6.33 BETA
+
 아래 사진은 **이전 0.6.33 BETA**를 RadioMaster TX16S MK3에서 실행한 실제 화면입니다. 현재 0.6.91의 Easy Setup 화면과는 다를 수 있습니다.
 
 | 메인 화면 / Main screen | 3D 헬리콥터 자세 / 3D Helicopter Attitude |
@@ -99,7 +113,7 @@ The current test target is RadioMaster TX16S MK3 with its current EdgeTX environ
 
 Other transmitters, display sizes, FCs, receivers, telemetry protocols, and firmware versions remain unverified. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
 
-See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.6.91-BILINGUAL.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and radio photographs above describe the older release and may not match current Easy Setup screens.
+See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.6.91-BILINGUAL.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show the current release.
 
 ## Main Areas
 

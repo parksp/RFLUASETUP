@@ -45,3 +45,15 @@ Extract the distribution ZIP and copy `SD-CARD/SCRIPTS` to the SD-card root. Ver
 **Disconnect the motor and remove blades for bench testing.** Verify each servo's pulse, frequency and voltage specifications. The target environment is TX16S MK3/EdgeTX with NEXUS Gyro/Rotorflight; validation across physical hardware combinations is incomplete.
 
 Testing covers simulated FC multi-selection/save/failure/RTN scenarios, actual Lua event paths, screen rendering, Full Setup regressions and syntax checks for 147 Lua files. This is not flight validation. Later Easy Setup stages remain in development. Multi-servo commands are still transmitted sequentially, not atomically.
+
+## Easy Setup 실제 화면 / Actual Easy Setup screens
+
+사용자가 제공한 0.6.91 BETA 실제 화면입니다. 표시된 펄스값은 해당 기체의 예시이며 권장값이 아닙니다. / User-provided photos of 0.6.91 BETA. The displayed pulse values are specific to that setup, not recommended defaults.
+
+### FC 장착 방향 / FC mounting direction
+
+![FC 장착 방향 / FC mounting direction](https://raw.githubusercontent.com/parksp/RFLUASETUP/main/docs/images/easy-fc-mounting-0.6.91.jpg)
+
+### 서보 리버스·센터 펄스 트림 / Servo reverse & center-pulse trim
+
+![서보 리버스·센터 펄스 트림 / Servo reverse and center-pulse trim](https://raw.githubusercontent.com/parksp/RFLUASETUP/main/docs/images/easy-servo-center-0.6.91.jpg)
