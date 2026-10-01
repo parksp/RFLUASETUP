@@ -1,5 +1,5 @@
 -- RF SETUP HELI 0.2.0 - reviewed UI shell for TX16S / EdgeTX
-local VERSION="0.6.33 BETA"
+local VERSION="0.6.91 BETA"
 local page="home"
 local selected=1
 local scroll=1
@@ -17,7 +17,7 @@ local W,H=800,480
 local hit={}
 local saveMode=1
 local armedLock=true
-setupSel=1;setupConfirm=nil;setupState='READY'
+setupSel=1;setupConfirm=nil;setupState='READY';easyMenuFocus=1;easyBoardFocus=1;easyFocus=1;easyState='READ FC';easyDraft={roll=0,pitch=0,yaw=0};easyDirty=false;easyFlip=false;easyFacing=0;easyConfirm=false;easyTrimFocus=1;easyTrimDraft={roll=0,pitch=0};easyTrimDirty=false;easyTrimConfirm=false;easyRxFocus=1;easyRxScroll=1;easyRxState='READ ONLY';easyCalConfirm=false;easyCalState='READY'
 cfgSel=2;cfgScroll=1;cfgState='NOT READ';cfgSaveConfirm=false;cfgSerialUnlocked=false;cfgSerialConfirm=false;cfgPortEdit=nil;cfgNameEdit=nil;cfgNameFocus=1;attitudeBackPage='status';cfgName='';cfgPilot=nil;cfgStats=nil;cfgAcc=nil;cfgFeature=0;cfgAdvanced={gyro=1,pid=1};cfgSensor={acc=0,baro=0,mag=0,gyro=0,fsr=0,move=0,duration=0,yaw=0,overflow=0};cfgAlign={roll=0,pitch=0,yaw=0};cfgSensorAlign={gyro1=0,gyro2=0,mag=0};cfgPorts={}
 homeHw={sensors=0,flashSupported=false,flashReady=false,flashTotal=0,flashUsed=0};homeHwAt=-1000;homeHwBusy=false;homeFlashHoldAt=nil;homeFlashHolding=false;homeFlashConfirm=false;homeFlashState='';statusRxScroll=1;statusYawOffset=0;statusInstrument=1;statusLive={state='WAITING FC',roll=0,pitch=0,yaw=0,rx={1500,1500,1500,1500,1000,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500},voltage=0,current=0,mah=0,rssi=0,cpu=0,load=0,flags=0,profile=0,motors=0};statusLiveAt=-1000;statusLiveBusy=false;statusFastAt=-1000;statusFastBusy=false;statusFastPhase=0;statusLivePhase=0
 
@@ -83,7 +83,7 @@ local function header(title,status)
  txt(20,63,title,'cyan',true);button('help','?',744,62,36,34,false,{kind='help'})
 end
 advBackTarget='full'
-local home={{'Full Setup','BETA TEST','full'},{'Easy Setup','COMING SOON','easy'},{'PROFILE FAST LINK','PID GAINS','profileGains'},{'RATES FAST LINK','RATE TABLE','rateTable'},{'Options','UNDER REPAIR','options'},{'Exit','CLOSE','exit'}}
+local home={{'Full Setup','BETA TEST','full'},{'Easy Setup','FC ALIGNMENT','easy'},{'PROFILE FAST LINK','PID GAINS','profileGains'},{'RATES FAST LINK','RATE TABLE','rateTable'},{'Options','UNDER REPAIR','options'},{'Exit','CLOSE','exit'}}
 local full={
  {'Status','Live FC, attitude, battery and receiver','status'},
  {'Setup','Calibration, save, reset and reboot tools','setup'},
@@ -113,7 +113,7 @@ local screens={
  governor={title='GOVERNOR',note='Tap ? for short help. Values match Rotorflight units.',rows={{'General','Mode: ELECTRIC','Autorotation 0 s','Hold timeout 5.0 s'},{'Throttle','Type: FUNCTION','Idle 0%','Handover 20%'},{'Motor ramp','Spoolup 10.0 s','Spooldown 3.0 s','Tracking 2.0 s'},{'Recovery','2.0 s','State','OFF / IDLE / AUTO / RUN'},{'Bypass curve','5 points','0 / 0 / 0 / 0 / 0%','Touch graph planned'},{'Profile values','Full headspeed','Min / Max throttle','PID + precomp'}}},
  profiles={title='PROFILES',note='Profile follows FC P1/P2/P3 when live connection is added.',pid=true,rows={{'PROFILE','P1','P2','P3'},{'PID GAINS','ROLL P 60  I 100  D 20','PITCH P 80  I 100  D 40','YAW P 120  I 180  D 30'},{'Feedforward / Boost','Roll 100 / 0','Pitch 100 / 0','Yaw 20 / 0'},{'Controller settings','Ground effect / I-term relax','Error limits / HSI','Cross coupling'},{'Bandwidth','Roll / Pitch / Yaw','D-term cutoff','B-term cutoff'},{'Tail rotor','Stop gains / precomp','TTA gain / limit','Inertia precomp'},{'Governor profile','Headspeed / throttle','PID / precomp','Behavior toggles'}}}
 }
-local function footer(msg)txt(20,449,msg or 'Roller: select   ENTER: open   RTN: back','muted');txt(430,463,'v0.6.33 BETA  |  BLADE PARK','muted');end
+local function footer(msg)txt(20,449,msg or 'Roller: select   ENTER: open   RTN: back','muted');txt(430,463,'v'..VERSION..'  |  BLADE PARK','muted');end
 local function drawList(title,list,back)
  header(title,'PREVIEW / NO FC WRITE');local visible=7
  if selected<scroll then scroll=selected elseif selected>=scroll+visible then scroll=selected-visible+1 end
@@ -189,12 +189,12 @@ local function saveServos()
  rf2.mspQueue:add({command=250,processReply=function()servoState='SAVED TO FC'end,errorHandler=function()servoState='APPLIED / SAVE AFTER DISARM'end})
 end
 
-local function sendOverride(si,angle,on)
- local v=on and (angle>=0 and math.floor(angle*1000/50+.5)or math.ceil(angle*1000/50-.5))or 2001;local m={command=193,payload={si}};rf2.mspHelper.writeU16(m.payload,v);rf2.mspQueue:add(m);overrideValue[si]=v;overrideAngle[si]=angle;overrideOn[si]=on;servoState=on and'OVERRIDE ACTIVE - DISARM ONLY'or'OVERRIDE OFF'
+local function sendOverride(si,angle,on,onReply,onError)
+ local v=on and (angle>=0 and math.floor(angle*1000/50+.5)or math.ceil(angle*1000/50-.5))or 2001;local m={command=193,payload={si},processReply=onReply,errorHandler=onError};rf2.mspHelper.writeU16(m.payload,v);rf2.mspQueue:add(m);overrideValue[si]=v;overrideAngle[si]=angle;overrideOn[si]=on;servoState=on and'OVERRIDE ACTIVE - DISARM ONLY'or'OVERRIDE OFF'
 end
-local function disableOverrides()
+local function disableOverrides(onReply,onError)
  overrideDrag=nil
- if not rfReady then return end;local any=false;for i=0,3 do if overrideOn[i]then any=true end;overrideOn[i]=false;overrideAngle[i]=0 end;if any then local m={command=196,payload={}};rf2.mspHelper.writeU16(m.payload,2001);rf2.mspQueue:add(m)end
+ if not rfReady then if onError then onError()end;return end;local any=false;for i=0,3 do if overrideOn[i]then any=true end;overrideOn[i]=false;overrideAngle[i]=0 end;if any or onReply then local m={command=196,payload={},processReply=onReply,errorHandler=onError};rf2.mspHelper.writeU16(m.payload,2001);rf2.mspQueue:add(m)end
 end
 
 local function commitCenterFromOutput(si)
@@ -306,11 +306,11 @@ local function drawTrim()mixerBase('SWASHPLATE TRIM');mixRows({cfgRow('Roll trim
 local function drawGeometry()mixerBase('MAIN ROTOR GEOMETRY');local deg=function(v)return string.format('%.1f deg',v*12/1000)end;mixRows({inpRow('Cyclic calibration [%]',1,'rate',-2000,2000,f1),inpRow('Cyclic blade pitch limit',1,'max',0,2500,deg),inpRow('Collective calibration [%]',4,'rate',-2000,2000,f1),inpRow('Collective blade pitch limit',4,'max',0,2500,deg),cfgRow('Geometry correction','swash_geo_correction',function(v)return f1(v*2)end),cfgRow('Total blade pitch limit','swash_pitch_limit',deg),cfgRow('Swashplate phase angle','swash_phase',f1),cfgRow('Positive tilt correction','collective_tilt_correction_pos'),cfgRow('Negative tilt correction','collective_tilt_correction_neg')});mixFooter()end
 local function drawTail()mixerBase('TAIL ROTOR SETTING');local mode=mixerConfig and mixerConfig.tail_rotor_mode;local q=mixerInputs[3];local rows={{'Tail Rotor Type',mode and mode.table[mode.value]or'READ...',{kind='mixfield',fieldKind='enum',index='tail_rotor_mode'}},{'Yaw Control Direction',directionLabel(3),{kind='mixfield',fieldKind='dir',index=3}},cfgRow('Yaw center trim','tail_center_trim',f1),inpRow('Yaw calibration [%]',3,'rate',-5000,5000,function(v)return f1(math.abs(v))end),inpRow('CW yaw blade limit',3,'min',-2500,0,function(v)return string.format('%.1f deg',-v*24/1000)end),inpRow('CCW yaw blade limit',3,'max',0,2500,function(v)return string.format('%.1f deg',v*24/1000)end)};mixRows(rows);mixFooter()end
 local function overrideScale(axis)return axis==3 and((mixerConfig and mixerConfig.tail_rotor_mode.value or 0)>0 and 100 or 24)or 12 end
-local function overrideAngle(axis)local v=mixerOverride[axis]or 0;return v*overrideScale(axis)/1000 end
+local function mixerOverrideAngle(axis)local v=mixerOverride[axis]or 0;return v*overrideScale(axis)/1000 end
 local function sendMixerOverride(axis,ang,on)local raw=2501;if on then raw=math.floor(ang*1000/overrideScale(axis)+(ang>=0 and .5 or-.5));raw=math.max(-2500,math.min(2500,raw))end;local q={axis};rf2.mspHelper.writeU16(q,raw);rf2.mspQueue:add({command=191,payload=q});mixerOverride[axis]=raw;mixerOverrideOn[axis]=on;mixerState=on and'OVERRIDE ACTIVE - DISARM ONLY'or'OVERRIDE OFF'end
 local function disableMixerOverrides()mixerDrag=nil;for _,axis in ipairs({1,2,3,4})do if mixerOverrideOn[axis]then sendMixerOverride(axis,0,false)end end end
 local function drawOverrideAxisRow(i,axis,name,lim,y)
- local ang=math.max(-lim,math.min(lim,overrideAngle(axis)));add('mxr'..i,20,y,710,45,{kind='mixOverrideSlider',axis=axis,limit=lim});box(20,y,710,45,mixerNav==i and'orange'or'line');txt(28,y+13,name,'cyan',true)
+ local ang=math.max(-lim,math.min(lim,mixerOverrideAngle(axis)));add('mxr'..i,20,y,710,45,{kind='mixOverrideSlider',axis=axis,limit=lim});box(20,y,710,45,mixerNav==i and'orange'or'line');txt(28,y+13,name,'cyan',true)
  button('moe'..axis,mixerOverrideOn[axis]and'ON'or'OFF',102,y+3,58,39,mixerOverrideOn[axis],{kind='mixOverrideEnable',axis=axis},'orange');button('mov'..axis,string.format('%+.1f',ang),166,y+3,82,39,false,{kind='mixOverrideValue',axis=axis,limit=lim},'cyan');button('mol'..axis,'<',254,y+3,40,39,false,{kind='mixOverrideStep',axis=axis,delta=-1},'cyan');fill(300,y+18,330,7,'line');if mixerGaugeEdit==axis then box(296,y+5,340,34,'orange')elseif mixerSelectedId=='mos'..axis then box(296,y+5,340,34,'cyan')end;local kx=300+math.floor((ang+lim)*330/(lim*2));fill(kx-6,y+8,12,27,mixerOverrideOn[axis]and'orange'or'muted');for n=0,12 do local tx=300+math.floor(n*330/12);local major=n%2==0;fill(tx,y+24,1,major and 7 or 4,'muted');if major then local v=math.floor((-lim+n*lim/6)*10+.5)/10;local label=math.abs(v-math.floor(v))<.05 and tostring(math.floor(v))or string.format('%.1f',v);txt(tx-(#label*3),y+31,label,'muted')end end;add('mos'..axis,294,y,342,45,{kind='mixOverrideSlider',axis=axis,limit=lim});button('mor'..axis,'>',680,y+3,40,39,false,{kind='mixOverrideStep',axis=axis,delta=1},'cyan')
 end
 function rfEasyInputDisplay(axis,key,raw)
@@ -444,7 +444,7 @@ function rfFlushMixerLive()
 end
 local function commitNumber()
  if not numEdit then return end;local v=tonumber(numEdit.text);if not v then numEdit.error='Enter a valid number';return end
- v=math.max(numEdit.min,math.min(numEdit.max,v));if numEdit.scale then local raw=v*numEdit.scale;if numEdit.preserveSign then raw=math.abs(raw)*(numEdit.rawSign or 1)end;v=raw>=0 and math.floor(raw+.5)or math.ceil(raw-.5)elseif numEdit.kind~='mixoverride'then v=v>=0 and math.floor(v+.5)or math.ceil(v-.5)end
+ v=math.max(numEdit.min,math.min(numEdit.max,v));if numEdit.scale then local raw=v*numEdit.scale;if numEdit.preserveSign then raw=math.abs(raw)*(numEdit.rawSign or 1)end;v=raw>=0 and math.floor(raw+.5)or math.ceil(raw-.5)elseif numEdit.kind~='mixoverride'and not(numEdit.kind=='easyServo'and numEdit.decimals==1)then v=v>=0 and math.floor(v+.5)or math.ceil(v-.5)end
  if numEdit.kind=='govField'then govCommitKey(numEdit.index,v)
  elseif numEdit.kind=='pid'then local k=pidMap[numEdit.index];pidData[k].value=v;pidDirty=true;pidState='CHANGED / NOT SAVED'
  elseif numEdit.kind=='override'then sendOverride(numEdit.index,v,true)
@@ -456,6 +456,9 @@ local function commitNumber()
  elseif numEdit.kind=='motorPole'then rfMotorPages[3][6][2]=tostring(v);motorConfig.poles[1]=v;motorDirty=true;rfGearDisplay();applyMotorLive()
  elseif numEdit.kind=='motorField'then motorConfig[numEdit.index]=v;motorDirty=true;rfMotorRefreshRows();applyMotorLive()
  elseif numEdit.kind=='escField'then escSensorConfig[numEdit.index].value=v;motorDirty=true;rfRefreshEscRows();rfApplyEscLive()
+ elseif numEdit.kind=='easy'then easyCommitNumber(numEdit.index,v)
+ elseif numEdit.kind=='easyTrim'then easyTrimCommitNumber(numEdit.index,v)
+ elseif numEdit.kind=='easyServo'then easyServo.commit(numEdit.index,v)
  elseif numEdit.kind=='config'then cfgCommit(numEdit.index,v)
  elseif numEdit.kind=='receiver'then rxCommit(numEdit.index,v)
  elseif numEdit.kind=='failsafe'then fsCommit(numEdit.index,v)
@@ -716,7 +719,7 @@ function requestStatusLive()
  statusLiveBusy=true;statusLive.state='UPDATING';local pending=5
  local function done()pending=pending-1;if pending<=0 then statusFinish()end end
  statusApi.getStatus(function(_,d)d=d or{};statusLive.cpu=d.cpuLoad or 0;statusLive.load=d.realTimeLoad or 0;statusLive.flags=d.armingDisableFlags or 0;statusLive.profile=d.profile or 0;statusLive.motors=d.motorCount or 0;done()end,done)
- rf2.mspQueue:add({command=108,processReply=function(_,b)b.offset=1;statusLive.roll=rf2.mspHelper.readS16(b)/10;statusLive.pitch=rf2.mspHelper.readS16(b)/10;statusLive.yaw=rf2.mspHelper.readS16(b);done()end,errorHandler=done})
+ rf2.mspQueue:add({command=108,processReply=function(_,b)b.offset=1;statusLive.roll=rf2.mspHelper.readS16(b)/10;statusLive.pitch=-rf2.mspHelper.readS16(b)/10;statusLive.yaw=-rf2.mspHelper.readS16(b);done()end,errorHandler=done})
  rf2.mspQueue:add({command=105,processReply=function(_,b)b.offset=1;local q={};local n=math.min(16,math.floor(#b/2));for i=1,n do q[i]=rf2.mspHelper.readU16(b)end;for i=n+1,16 do q[i]=1500 end;statusLive.rx=q;done()end,errorHandler=done})
  rf2.mspQueue:add({command=110,processReply=function(_,b)local function u16(i)return(b[i]or 0)+(b[i+1]or 0)*256 end;statusLive.voltage=(b[1]or 0)/10;statusLive.mah=u16(2);statusLive.rssi=u16(4);local a=u16(6);if a>=32768 then a=a-65536 end;statusLive.current=a/100;done()end,errorHandler=done})
  rf2.mspQueue:add({command=109,processReply=function(_,b)local v=(b[1]or 0)+(b[2]or 0)*256+(b[3]or 0)*65536+(b[4]or 0)*16777216;if v>=2147483648 then v=v-4294967296 end;statusLive.altitude=v;done()end,errorHandler=done})
@@ -738,15 +741,18 @@ function statusAngleDelta(a,b)
  local d=(a or 0)-(b or 0);while d>180 do d=d-360 end;while d<-180 do d=d+360 end;return d
 end
 function drawStatusHeli(cx,cy,viewScale)
- local rr=(statusLive.roll or 0)*math.pi/180;local pr=(statusLive.pitch or 0)*math.pi/180;local yr=statusAngleDelta(statusLive.yaw,statusYawOffset)*math.pi/180;local cr,sr=math.cos(rr),math.sin(rr);local cp,sp=math.cos(pr),math.sin(pr);local viewYaw=math.pi-yr;local cyr,syr=math.cos(viewYaw),math.sin(viewYaw)
- local function pt(x,y,z)local scale=viewScale or 1;x=(x+33)*scale;y=y*scale;z=z*scale;local y1=y*cr-z*sr;local z1=y*sr+z*cr;local x2=x*cp+z1*sp;local z2=-x*sp+z1*cp;local x3=x2*cyr-y1*syr;local y3=x2*syr+y1*cyr;return cx+y3*.72,cy-z2*.72 end
- local function seg(a,b,color,size)local x1,y1=pt(a[1],a[2],a[3]or 0);local x2,y2=pt(b[1],b[2],b[3]or 0);statusDotLine(x1,y1,x2,y2,color,size)end
- seg({-125,0,0},{55,0,0},'text',5);seg({-118,-15,0},{-118,15,0},'orange',5);seg({-118,0,-24},{-118,0,24},'orange',5)
+ local rr=(statusLive.roll or 0)*math.pi/180;local pr=-(statusLive.pitch or 0)*math.pi/180;local yr=-statusAngleDelta(statusLive.yaw,statusYawOffset)*math.pi/180;local cr,sr=math.cos(rr),math.sin(rr);local cp,sp=math.cos(pr),math.sin(pr);local viewYaw=math.pi-yr;local cyr,syr=math.cos(viewYaw),math.sin(viewYaw)
+ local lines={}
+ local function pt(x,y,z)local scale=viewScale or 1;x=(x+33)*scale;y=y*scale;z=z*scale;local y1=y*cr-z*sr;local z1=y*sr+z*cr;local x2=x*cp+z1*sp;local z2=-x*sp+z1*cp;local x3=x2*cyr-y1*syr;local y3=x2*syr+y1*cyr;return cx+y3*.72,cy-z2*.72,x3 end
+ local function seg(a,b,color,size)local x1,y1,d1=pt(a[1],a[2],a[3]or 0);local x2,y2,d2=pt(b[1],b[2],b[3]or 0);lines[#lines+1]={x1,y1,x2,y2,color,size,(d1+d2)*.5}end
+ seg({-125,0,0},{55,0,0},'text',5)
  seg({-48,-22,0},{36,-20,0},'cyan',6);seg({36,-20,0},{58,0,0},'cyan',6);seg({58,0,0},{36,20,0},'cyan',6);seg({36,20,0},{-48,22,0},'cyan',6);seg({-48,22,0},{-65,0,0},'cyan',6);seg({-65,0,0},{-48,-22,0},'cyan',6)
  seg({-20,-13,9},{31,-12,9},'blue',6);seg({31,-12,9},{46,0,9},'blue',6);seg({46,0,9},{31,12,9},'blue',6);seg({31,12,9},{-20,13,9},'blue',6)
- seg({0,0,9},{0,0,27},'text',6);seg({-102,0,27},{102,0,27},'cyan',5);seg({0,-102,27},{0,102,27},'cyan',5)
+ seg({-20,-13,9},{-48,-22,0},'purple',3);seg({-20,13,9},{-48,22,0},'purple',3);seg({31,-12,9},{36,-20,0},'purple',3);seg({31,12,9},{36,20,0},'purple',3);seg({46,0,9},{58,0,0},'orange',5)
+ seg({0,0,9},{0,0,27},'red',6);local rp={102,0,27};for i=1,20 do local a=i*math.pi*2/20;local rn={math.cos(a)*102,math.sin(a)*102,27};seg(rp,rn,'red',2);rp=rn end;seg({-72,-72,27},{72,72,27},'red',5);seg({-72,72,27},{72,-72,27},'red',5)
  seg({-38,-22,-7},{-45,-32,-22},'text',4);seg({28,-22,-7},{38,-32,-22},'text',4);seg({-58,-32,-22},{57,-32,-22},'text',5);seg({-38,22,-7},{-45,32,-22},'text',4);seg({28,22,-7},{38,32,-22},'text',4);seg({-58,32,-22},{57,32,-22},'text',5)
- local hx,hy=pt(8,0,5);fill(hx-10,hy-7,20,14,'orange');txt(hx-8,hy-6,'RF','text',true);seg({-125,0,0},{-52,0,0},'text',6);seg({-118,-18,0},{-118,18,0},'orange',6);seg({-118,0,-27},{-118,0,27},'orange',6)
+ seg({-112,0,-2},{-126,0,24},'cyan',5);seg({-126,0,24},{-126,0,-5},'cyan',5);seg({-118,0,0},{-118,-34,0},'purple',4);local trp={-94,-34,0};for i=1,16 do local a=i*math.pi*2/16;local trn={-118+math.cos(a)*24,-34,math.sin(a)*24};seg(trp,trn,'orange',2);trp=trn end;seg({-135,-34,-17},{-101,-34,17},'orange',5);seg({-135,-34,17},{-101,-34,-17},'orange',5)
+ table.sort(lines,function(a,b)return a[7]<b[7]end);for i=1,#lines do local l=lines[i];statusDotLine(l[1],l[2],l[3],l[4],l[5],l[6])end
 end
 function statusResetZ()
  statusYawOffset=statusLive.yaw or 0;statusLive.state='Z AXIS OFFSET RESET'
@@ -774,7 +780,7 @@ function drawStatusAttitude()
  header('ATTITUDE','LIVE')
  statusCard(20,100,760,286,'3D HELICOPTER ATTITUDE','purple');drawStatusHeli(400,250,1.35)
  fill(38,142,190,76,'panel');box(38,142,190,76,'line');txt(52,158,string.format('ROLL  %+.1f deg',statusLive.roll or 0),'cyan',true);txt(52,187,string.format('PITCH %+.1f deg',statusLive.pitch or 0),'orange',true);fill(610,142,150,48,'panel');box(610,142,150,48,'line');txt(625,158,string.format('YAW %+.0f deg',statusAngleDelta(statusLive.yaw,statusYawOffset)),'green',true)
- button('resetZ','RESET Z AXIS',390,390,190,42,false,{kind='statusResetZ'},'orange');button('attBack',attitudeBackPage=='configuration'and'< CONFIG'or(attitudeBackPage=='receiver'and'< RECEIVER'or'< STATUS'),600,390,180,42,false,{kind='statusAttitudeBack'},'cyan');footer('RESET Z: sets the current heading to a rear-tail view.')
+ button('resetZ','RESET Z AXIS',390,390,190,42,false,{kind='statusResetZ'},'orange');button('attBack',attitudeBackPage=='configuration'and'< CONFIG'or(attitudeBackPage=='receiver'and'< RECEIVER'or(attitudeBackPage=='easyBoardMenu'and'< CLOSE'or'< STATUS')),600,390,180,42,false,{kind='statusAttitudeBack'},'cyan');footer('RESET Z: sets the current heading to 0 deg without reversing the model.')
 end
 
 
@@ -859,11 +865,13 @@ function rxJump(id)local i=rxJumpIndex(id);rxSel=i;rxScroll=i;rxQuickActive=id e
 function rxQuickCurrent()local best=1;local pos=-1;for id=1,6 do local p=rxJumpIndex(id);if p<=rxScroll and p>=pos then best=id;pos=p end end;return best end
 function drawRxQuickNav()local names={'PROTO','RANGE','TELEM','SENS','ASSIGN','VIEW'};local active=rxQuickCurrent();for i,n in ipairs(names)do local x=126+(i-1)*101;button('rxQuick'..i,n,x,62,94,34,active==i,{kind='rxQuick',value=i},(i==3 or i==4)and'orange'or'cyan')end end
 function drawReceiver()rxBuildRows();header('RECEIVER',rxState);drawRxQuickNav();local visible=7;if rxSel<rxScroll then rxScroll=rxSel elseif rxSel>=rxScroll+visible then rxScroll=rxSel-visible+1 end;rxScroll=math.max(1,math.min(math.max(1,#rxRows-visible+1),rxScroll));local y=104
- for i=rxScroll,math.min(#rxRows,rxScroll+visible-1)do local r=rxRows[i];local sec=r[1]=='section';local danger=sec and r[3]=='danger';fill(20,y,720,40,sec and'panel2'or(rxSel==i and'panel2'or'panel'));box(20,y,720,40,danger and'red'or(rxSel==i and'cyan'or'line'));if sec then fill(20,y,8,40,danger and'red'or'purple');txt(42,y+12,r[2],danger and'red'or'cyan',true)else if r[1]~='assignheader'and r[1]~='channel'and r[1]~='livechannel'and r[1]~='rssi'then txt(34,y+12,r[2],rxSel==i and'cyan'or'text')end;local v=rxValue(r);if r[1]=='assignheader'then fill(20,y,8,40,'green');txt(42,y+12,r[2],'green',true);button('rxRow'..i,rxAssignmentOpen and'HIDE ^'or'SHOW v',590,y+5,132,30,rxSel==i,{kind='rxRow',index=i},'green') elseif r[1]=='channel'or r[1]=='livechannel'then local ch=r[3];local pwm=statusLive.rx[ch]or 1500;local cen=rxRc.center or 1500;local def=math.max(1,rxRc.deflection or 500);local pct=math.max(-100,math.min(100,(pwm-cen)*100/def));local q=(pct+100)/200;local fn=rxAssigned(ch);txt(34,y+12,tostring(ch),ch<=8 and'cyan'or'text',true);button('rxName'..i,rxNames[fn]or('AUX'..math.max(1,ch-5)),65,y+5,145,30,rxSel==i,{kind='rxRow',index=i},ch<=8 and'cyan'or'muted');fill(224,y+14,280,12,'bg');fill(224,y+14,280*q,12,ch<=5 and'cyan'or'green');fill(363,y+10,2,20,'orange');box(224,y+14,280,12,'line');txt(516,y+12,tostring(pwm)..' us','text');txt(640,y+12,string.format('%+.1f%%',pct),math.abs(pct)<.1 and'muted'or'cyan') elseif r[1]=='rssi'then local raw=statusLive.rssi or 0;local rp=math.max(0,math.min(100,raw>100 and raw/10.23 or raw));txt(34,y+12,r[2],rxSel==i and'cyan'or'text');button('rxRssi'..i,rxRssiText(),250,y+5,105,30,rxSel==i,{kind='rxRow',index=i},'cyan');fill(370,y+14,250,12,'bg');fill(370,y+14,250*rp/100,12,'orange');box(370,y+14,250,12,'line');txt(640,y+12,string.format('%.0f%%',rp),'orange',true) elseif r[1]=='toggle'then button('rxOff'..i,'OFF',590,y+5,62,30,not v,{kind='rxToggle',index=i},'orange');button('rxOn'..i,'ON',660,y+5,62,30,v,{kind='rxToggle',index=i},'cyan')else local label=(r[1]=='unlock'or r[1]=='action'or r[1]=='preview'or r[1]=='mode')and r[2]or tostring(v);button('rxRow'..i,fit(label,27),490,y+5,232,30,rxSel==i or(r[1]=='mode'and rxTelemView==r[3]),{kind='rxRow',index=i},r[1]=='unlock'and'red'or'cyan')end end;y=y+44 end
+ for i=rxScroll,math.min(#rxRows,rxScroll+visible-1)do local r=rxRows[i];local sec=r[1]=='section';local danger=sec and r[3]=='danger';fill(20,y,720,40,sec and'panel2'or(rxSel==i and'panel2'or'panel'));box(20,y,720,40,danger and'red'or(rxSel==i and'cyan'or'line'));if sec then fill(20,y,8,40,danger and'red'or'purple');txt(42,y+12,r[2],danger and'red'or'cyan',true)else if r[1]~='assignheader'and r[1]~='channel'and r[1]~='livechannel'and r[1]~='rssi'then txt(34,y+12,r[2],rxSel==i and'cyan'or'text')end;local v=rxValue(r);if r[1]=='assignheader'then fill(20,y,8,40,'green');txt(42,y+12,r[2],'green',true);button('rxRow'..i,rxAssignmentOpen and'HIDE ^'or'SHOW v',590,y+5,132,30,rxSel==i,{kind='rxRow',index=i},'green') elseif r[1]=='channel'or r[1]=='livechannel'then local ch=r[3];local pwm=rxChannelPwm(ch);local cen=rxRc.center or 1500;local def=math.max(1,rxRc.deflection or 500);local pct=math.max(-100,math.min(100,(pwm-cen)*100/def));local q=(pct+100)/200;local fn=rxAssigned(ch);txt(34,y+12,tostring(ch),ch<=8 and'cyan'or'text',true);button('rxName'..i,rxNames[fn]or('AUX'..math.max(1,ch-5)),65,y+5,145,30,rxSel==i,{kind='rxRow',index=i},ch<=8 and'cyan'or'muted');fill(224,y+14,280,12,'bg');fill(224,y+14,280*q,12,ch<=5 and'cyan'or'green');fill(363,y+10,2,20,'orange');box(224,y+14,280,12,'line');txt(516,y+12,tostring(pwm)..' us','text');txt(640,y+12,string.format('%+.1f%%',pct),math.abs(pct)<.1 and'muted'or'cyan') elseif r[1]=='rssi'then local raw=statusLive.rssi or 0;local rp=math.max(0,math.min(100,raw>100 and raw/10.23 or raw));txt(34,y+12,r[2],rxSel==i and'cyan'or'text');button('rxRssi'..i,rxRssiText(),250,y+5,105,30,rxSel==i,{kind='rxRow',index=i},'cyan');fill(370,y+14,250,12,'bg');fill(370,y+14,250*rp/100,12,'orange');box(370,y+14,250,12,'line');txt(640,y+12,string.format('%.0f%%',rp),'orange',true) elseif r[1]=='toggle'then button('rxOff'..i,'OFF',590,y+5,62,30,not v,{kind='rxToggle',index=i},'orange');button('rxOn'..i,'ON',660,y+5,62,30,v,{kind='rxToggle',index=i},'cyan')else local label=(r[1]=='unlock'or r[1]=='action'or r[1]=='preview'or r[1]=='mode')and r[2]or tostring(v);button('rxRow'..i,fit(label,27),490,y+5,232,30,rxSel==i or(r[1]=='mode'and rxTelemView==r[3]),{kind='rxRow',index=i},r[1]=='unlock'and'red'or'cyan')end end;y=y+44 end
  button('rxUp','^',748,105,32,34,false,{kind='rxScroll',delta=-3},'cyan');fill(758,145,10,210,'line');local th=math.max(24,math.floor(210*visible/#rxRows));local ty=145+math.floor((210-th)*(rxScroll-1)/math.max(1,#rxRows-visible));fill(753,ty,20,th,'cyan');button('rxDown','v',748,364,32,34,false,{kind='rxScroll',delta=3},'cyan');footer('Assignment is hidden by default. Preset remaps live bars; CH 1-8 are editable.');if rxWarning then drawRxWarning()end
 end
 
-function rxFunctionPwm(fn)local c=(rxMap[fn]or(fn-1))+1;return statusLive.rx[c]or(fn==5 and 1000 or 1500)end
+-- MSP_RC (105) contains function-ordered rcInput, not raw receiver channels.
+function rxFunctionPwm(fn)return statusLive.rx[fn]or(fn==5 and 1000 or 1500)end
+function rxChannelPwm(ch)return rxFunctionPwm(rxAssigned(ch))end
 function rxStickPct(fn)local cen=rxRc.center or 1500;local def=math.max(1,rxRc.deflection or 500);return math.max(-100,math.min(100,(rxFunctionPwm(fn)-cen)*100/def))end
 function drawReceiverPreview()
  header('RECEIVER STICK PREVIEW','LIVE')
@@ -934,12 +942,12 @@ function cfgRead()
  nameApi.getModelName(function(_,v)cfgName=v or''end,nil)
  if rf2.apiVersion>=12.07 then pilotApi.read(function(_,v)cfgPilot=v end,nil,cfgPilot)end
  if rf2.apiVersion>=12.09 then statsApi.read(function(_,v)cfgStats=v end,nil,cfgStats)end
- accTrimApi.read(function(_,v)cfgAcc=v end,nil,cfgAcc)
+ accTrimApi.read(function(_,v)cfgAcc=v;if(page=='easyTrim'or page=='easyBoardMenu')and not easyTrimDirty and cfgAcc then easyTrimDraft={roll=cfgAcc.roll_trim.value or 0,pitch=cfgAcc.pitch_trim.value or 0};easyState='ACC TRIM LOADED'end end,nil,cfgAcc)
  rf2.mspQueue:add({command=36,processReply=function(_,b)b.offset=1;cfgFeature=cfgU32(b)end})
  rf2.mspQueue:add({command=90,processReply=function(_,b)b.offset=1;cfgAdvanced.gyro=rf2.mspHelper.readU8(b);cfgAdvanced.pid=rf2.mspHelper.readU8(b)end})
  rf2.mspQueue:add({command=96,processReply=function(_,b)b.offset=1;cfgSensor.acc=rf2.mspHelper.readU8(b);cfgSensor.baro=rf2.mspHelper.readU8(b);cfgSensor.mag=rf2.mspHelper.readU8(b);cfgSensor.gyro=rf2.mspHelper.readU8(b);cfgSensor.fsr=rf2.mspHelper.readU8(b);cfgSensor.move=rf2.mspHelper.readU8(b);cfgSensor.duration=rf2.mspHelper.readU16(b);cfgSensor.yaw=rf2.mspHelper.readU16(b);cfgSensor.overflow=rf2.mspHelper.readU8(b)end})
  rf2.mspQueue:add({command=126,processReply=function(_,b)b.offset=1;cfgSensorAlign.gyro1=rf2.mspHelper.readU8(b);cfgSensorAlign.gyro2=rf2.mspHelper.readU8(b);cfgSensorAlign.mag=rf2.mspHelper.readU8(b)end})
- rf2.mspQueue:add({command=38,processReply=function(_,b)b.offset=1;cfgAlign.roll=rf2.mspHelper.readS16(b);cfgAlign.pitch=rf2.mspHelper.readS16(b);cfgAlign.yaw=rf2.mspHelper.readS16(b)end})
+ rf2.mspQueue:add({command=38,processReply=function(_,b)b.offset=1;cfgAlign.roll=rf2.mspHelper.readS16(b);cfgAlign.pitch=rf2.mspHelper.readS16(b);cfgAlign.yaw=rf2.mspHelper.readS16(b);if(page=='easyAlign'or page=='easyBoardMenu')and not easyDirty then easyDraft={roll=cfgAlign.roll,pitch=cfgAlign.pitch,yaw=cfgAlign.yaw};easyFacing=math.floor(((cfgAlign.yaw or 0)%360+45)/90)%4;easyFlip=math.abs(cfgAlign.roll or 0)>=135;easyState='FC ALIGNMENT LOADED'end end})
  rf2.mspQueue:add({command=54,processReply=function(_,b)b.offset=1;cfgPorts={};while b.offset+8<=#b+1 do local q={id=rf2.mspHelper.readU8(b),mask=cfgU32(b),baud={}};for j=1,4 do q.baud[j]=rf2.mspHelper.readU8(b)end;cfgPorts[#cfgPorts+1]=q end;cfgState='CONNECTED / READY'end,errorHandler=function()cfgState='SERIAL READ ERROR'end})
 end
 function cfgWriteU32(q,v)rf2.mspHelper.writeU32(q,v)end
@@ -1079,6 +1087,92 @@ end
 function drawSetupConfirm()
  local c=setupConfirm;if not c then return end;local r=setupRows[c.index];hit={};fill(95,105,610,270,'panel');box(95,105,610,270,'orange');fill(95,105,610,42,'orange');txt(118,118,'CONFIRM SETUP COMMAND','text',true);txt(125,172,r[1],'cyan',true);txt(125,210,r[2],'text');txt(125,246,(r[3]=='acc')and'DISARM. Keep the FC level and motionless.'or'DISARM before continuing.','orange',true);button('setupNo','CANCEL',190,306,180,44,not c.yes,{kind='setupConfirmNo'},'cyan');button('setupYes','CONTINUE',430,306,180,44,c.yes,{kind='setupConfirmYes'},'orange')
 end
+function easyNormalize(v)v=v%360;if v>180 then v=v-360 end;return v end
+function easyPreset()
+ easyDraft.yaw=easyFacing*90;easyDraft.roll=easyFlip and 180 or 0;easyDraft.pitch=0;easyDirty=true;easyState='PREVIEW / NOT SAVED'
+end
+function easyRotate(delta)easyFacing=(easyFacing+delta)%4;easyPreset()end
+function easyFlipBoard()easyFlip=not easyFlip;easyPreset()end
+function easyCommitNumber(key,v)easyDraft[key]=easyNormalize(v);if key=='yaw'then easyFacing=math.floor(((easyDraft.yaw%360)+45)/90)%4 elseif key=='roll'then easyFlip=math.abs(easyDraft.roll)>=135 end;easyDirty=true;easyState='CUSTOM / NOT SAVED'end
+function easySave()
+ if not rfReady then easyState='FC OFFLINE';easyConfirm=false;return end
+ cfgAlign.roll=easyDraft.roll;cfgAlign.pitch=easyDraft.pitch;cfgAlign.yaw=easyDraft.yaw;easyConfirm=false;easyState='APPLYING ALIGNMENT...';cfgWriteGroup('align')
+ rf2.mspQueue:add({command=250,processReply=function()easyDirty=false;easyState='SAVED TO FC'end,errorHandler=function()easyState='SAVE FAILED - DISARM FC'end})
+end
+function easyLine(x1,y1,x2,y2,c,w)if statusDotLine then statusDotLine(x1,y1,x2,y2,c,w or 3)elseif lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),col(c))end end
+function drawEasyHeli()
+ local cx,cy=258,238
+ -- clean top-view helicopter: rounded nose, circular main/tail rotors
+ txt(cx-46,cy-153,'HELI FRONT','orange',true)
+ local function easyCircle(ox,oy,rad,color,width)local px,py=ox+rad,oy;for i=1,32 do local a=i*math.pi*2/32;local nx,ny=ox+math.cos(a)*rad,oy+math.sin(a)*rad;easyLine(px,py,nx,ny,color,width or 2);px,py=nx,ny end end
+ -- main rotor disc and mast
+ easyCircle(cx,cy-30,74,'text',2);easyLine(cx-70,cy-30,cx+70,cy-30,'text',5);easyLine(cx,cy-100,cx,cy+40,'text',5);easyCircle(cx,cy-30,7,'cyan',3)
+ -- rounded canopy and fuselage
+ easyLine(cx-30,cy-80,cx-18,cy-96,'cyan',5);easyLine(cx-18,cy-96,cx,cy-103,'cyan',5);easyLine(cx,cy-103,cx+18,cy-96,'cyan',5);easyLine(cx+18,cy-96,cx+30,cy-80,'cyan',5)
+ easyLine(cx-30,cy-80,cx-46,cy-48,'cyan',5);easyLine(cx-46,cy-48,cx-40,cy+46,'cyan',5);easyLine(cx-40,cy+46,cx,cy+68,'cyan',5);easyLine(cx,cy+68,cx+40,cy+46,'cyan',5);easyLine(cx+40,cy+46,cx+46,cy-48,'cyan',5);easyLine(cx+46,cy-48,cx+30,cy-80,'cyan',5)
+ -- tail boom and tail rotor on rear-right side
+ easyLine(cx,cy+68,cx,cy+121,'cyan',6);easyLine(cx,cy+116,cx+30,cy+116,'orange',4);easyLine(cx+30,cy+96,cx+30,cy+136,'orange',6)
+ -- two clean skids viewed from above
+ easyLine(cx-59,cy-45,cx-59,cy+62,'text',4);easyLine(cx+59,cy-45,cx+59,cy+62,'text',4);easyLine(cx-59,cy-18,cx-38,cy-8,'muted',3);easyLine(cx+59,cy-18,cx+38,cy-8,'muted',3);easyLine(cx-59,cy+40,cx-38,cy+32,'muted',3);easyLine(cx+59,cy+40,cx+38,cy+32,'muted',3)
+ -- NEXUS-XR photo supplied by the user; orientation follows the FC yaw preset
+ local bx,by=cx,cy-10;local vertical=easyFacing%2==0;local bw=vertical and 50 or 90;local bh=vertical and 90 or 50
+ local bmps=easyFlip and easyNexusBackBmps or easyNexusBmps;local bmp=bmps and bmps[easyFacing+1];if bmp and lcd.drawBitmap then lcd.drawBitmap(bmp,sx(bx-bw/2),sy(by-bh/2))else fill(bx-bw/2,by-bh/2,bw,bh,easyFlip and'pid'or'blue');box(bx-bw/2,by-bh/2,bw,bh,easyFlip and'orange'or'cyan')end txt(168,342,easyFlip and'BOARD BOTTOM UP'or'BOARD TOP UP',easyFlip and'orange'or'green',true)
+ if not easyFlip and easyFacing==0 then txt(126,363,'DEFAULT: ROLL 0  PITCH 0  YAW 0','cyan',true)end
+end
+function drawEasyConfirm()
+ hit={};fill(105,116,590,242,'panel');box(105,116,590,242,'orange');fill(105,116,590,42,'orange');txt(128,129,'APPLY FC ALIGNMENT & SAVE?','text',true);txt(135,185,string.format('ROLL %d   PITCH %d   YAW %d',easyDraft.roll,easyDraft.pitch,easyDraft.yaw),'cyan',true);txt(135,222,'DISARM and remove main/tail blades before continuing.','orange');button('easyNo','CANCEL',190,292,180,44,false,{kind='easyNo'},'cyan');button('easyYes','APPLY & SAVE',420,292,190,44,false,{kind='easyYes'},'orange')
+end
+easySteps={'BOARD & SENSOR ALIGNMENT','RECEIVER SETUP','SERVO / SWASH SETUP'}
+function drawEasy()
+ header('EASY SETUP','SELECT STEP');txt(20,94,'GUIDED HELICOPTER SETUP','cyan',true)
+ for i,name in ipairs(easySteps)do local x=20;local y=122+(i-1)*66;local w=760;local focus=easyMenuFocus==i;fill(x,y,w,54,focus and'panel2'or'panel');box(x,y,w,54,focus and'cyan'or'line');fill(x,y,8,54,i==1 and'cyan'or'green');txt(x+18,y+16,tostring(i)..'. '..name,focus and'cyan'or'text',true);txt(x+w-82,y+18,'OPEN >','green');add('easyStep'..i,x,y,w,54,{kind='easyStep',index=i})end
+ button('easyMenuBack','< HOME',610,400,170,36,easyMenuFocus==#easySteps+1,{kind='easyMenuBack'},'cyan');footer('Step 3: SERVO CENTER TRIM / grouped override / selected Center apply.')
+end
+function drawEasyReceiver()
+ header('EASY SETUP  2/12','RECEIVER CHECK / READ ONLY')
+ local pi=rxProtocolIndex();local proto=(rxProtocols[pi]and rxProtocols[pi][1])or'UNKNOWN';local telem=bit32.btest(rxFeature,bit32.lshift(1,10));local linked=rfReady and statusLive.state~='WAITING FC';local sensors=rxSensorTotal();local lo=(rxRc.center or 1500)-(rxRc.deflection or 500);local hi=(rxRc.center or 1500)+(rxRc.deflection or 500)
+ fill(20,94,760,70,'panel2');box(20,94,760,70,'line');txt(36,106,'PROTOCOL','muted');txt(36,130,proto,'cyan',true);txt(278,106,'TELEMETRY','muted');txt(278,130,telem and('ON / '..sensors..' SENSORS')or'OFF',telem and'green'or'orange',true);txt(570,106,'FC LINK','muted');txt(570,130,linked and'LIVE'or'WAIT',linked and'green'or'orange',true)
+ fill(20,170,760,42,'panel');box(20,170,760,42,'line');txt(36,184,string.format('CENTER %d us',rxRc.center or 1500),'cyan',true);txt(262,184,string.format('EXPECTED %d - %d us',lo,hi),'text',true);txt(610,184,'RSSI '..rxRssiText(),'orange',true)
+ txt(30,220,'INPUT','muted',true);txt(106,220,'ASSIGNMENT / LIVE RANGE','muted',true);txt(650,220,'PWM','muted',true)
+ easyRxScroll=math.max(1,math.min(4,easyRxScroll or 1));for row=1,5 do local ch=easyRxScroll+row-1;local y=240+(row-1)*31;local pwm=rxChannelPwm(ch);local fn=rxAssigned(ch);local name=rxNames[fn]or('CH'..fn);local q=math.max(0,math.min(1,(pwm-lo)/math.max(1,hi-lo)));local centered=math.abs(pwm-(rxRc.center or 1500))<=math.max(10,rxRc.deadband or 5);fill(28,y,704,27,'panel');box(28,y,704,27,'line');txt(40,y+7,'CH'..ch,'cyan',true);txt(104,y+7,name,ch<=5 and'text'or'muted',true);fill(264,y+8,330,11,'bg');fill(264,y+8,330*q,11,ch<=5 and'cyan'or'green');fill(428,y+4,2,19,'orange');box(264,y+8,330,11,'line');txt(622,y+7,tostring(pwm)..' us',centered and'green'or'text',true)end
+ button('easyRxUp','^',744,238,36,36,easyRxFocus==1,{kind='easyRxScroll',delta=-1},'cyan');button('easyRxDown','v',744,356,36,36,easyRxFocus==2,{kind='easyRxScroll',delta=1},'cyan');button('easyRxRefresh','REFRESH',430,405,165,36,easyRxFocus==3,{kind='easyRxRefresh'},'green');button('easyRxBack','< BACK',610,405,170,36,easyRxFocus==4,{kind='easyRxBack'},'cyan');footer('Move each stick. Confirm assignment, center and both endpoints. No FC values are changed.')
+end
+function easyCalStart()
+ if not rfReady then easyCalState='FC OFFLINE';easyCalConfirm=false;return end
+ easyCalConfirm=false;easyCalState='CALIBRATION STARTING...';rf2.mspQueue:add({command=205,processReply=function()easyCalState='STARTED - KEEP LEVEL AND STILL';statusLiveAt=-1000 end,errorHandler=function()easyCalState='FAILED - DISARM / CHECK FC'end})
+end
+function drawEasyCalConfirm()
+ hit={};fill(92,96,616,286,'panel');box(92,96,616,286,'orange');fill(92,96,616,44,'orange');txt(118,109,'ACCELEROMETER CALIBRATION','text',true);txt(126,164,'1. DISARM the helicopter and remove blades.','orange',true);txt(126,196,'2. Place the helicopter on a truly level surface.','text');txt(126,226,'3. Keep the FC completely still until finished.','text');txt(126,258,'Start calibration now?','cyan',true);button('easyCalNo','CANCEL',185,316,185,44,false,{kind='easyCalNo'},'cyan');button('easyCalYes','START',430,316,185,44,false,{kind='easyCalYes'},'orange')
+end
+function drawEasyBoardMenu()
+ header('EASY SETUP  1','BOARD & SENSOR ALIGNMENT');txt(20,88,'OPEN ONE SETTING AT A TIME','cyan',true)
+ local rows={{'FC MOUNTING DIRECTION','Board orientation / cable connector reference','easyOpenAlign'},{'ACCELEROMETER CALIBRATION',easyCalState,'easyOpenCal'},{'ACCELEROMETER TRIM','Fine level correction after calibration','easyOpenTrim'},{'MOVEMENT CHECK','Move the gyro and verify the live 3D helicopter','easyOpenMovement'}}
+ for i,r in ipairs(rows)do local y=106+(i-1)*63;fill(40,y,720,56,easyBoardFocus==i and'panel2'or'panel');box(40,y,720,56,easyBoardFocus==i and'cyan'or'line');fill(40,y,8,56,({'cyan','orange','green','purple'})[i]);txt(62,y+9,r[1],easyBoardFocus==i and'cyan'or'text',true);txt(62,y+32,r[2],'muted');button('easyBoardOpen'..i,i==2 and'CALIBRATE'or'OPEN >',620,y+8,120,40,easyBoardFocus==i,{kind=r[3]},({'cyan','orange','green','purple'})[i])end
+ button('easyBoardClose','< CLOSE',610,382,170,40,easyBoardFocus==5,{kind='easyBoardClose'},'cyan');footer('Mount direction first. Calibrate level, then trim and verify movement.')
+end
+function easyTrimCommitNumber(key,v)easyTrimDraft[key]=v;easyTrimDirty=true;easyState='ACC TRIM / NOT SAVED'end
+function easyTrimSave()
+ if not rfReady or not cfgAcc then easyState='FC / ACC TRIM NOT READY';easyTrimConfirm=false;return end
+ cfgAcc.roll_trim.value=easyTrimDraft.roll;cfgAcc.pitch_trim.value=easyTrimDraft.pitch;easyTrimConfirm=false;easyState='SAVING ACC TRIM...';accTrimApi.write(cfgAcc);rf2.mspQueue:add({command=250,processReply=function()easyTrimDirty=false;easyState='ACC TRIM SAVED TO FC'end,errorHandler=function()easyState='SAVE FAILED - DISARM FC'end})
+end
+function drawEasyTrimConfirm()
+ hit={};fill(105,116,590,242,'panel');box(105,116,590,242,'orange');fill(105,116,590,42,'orange');txt(128,129,'APPLY ACCELEROMETER TRIM?','text',true);txt(150,185,string.format('ROLL %.1f deg   PITCH %.1f deg',easyTrimDraft.roll/10,easyTrimDraft.pitch/10),'cyan',true);txt(135,222,'Keep the helicopter level and completely still.','orange');button('easyTrimNo','CANCEL',190,292,180,44,false,{kind='easyTrimNo'},'cyan');button('easyTrimYes','APPLY & SAVE',420,292,190,44,false,{kind='easyTrimYes'},'orange')
+end
+function drawEasyTrim()
+ header('EASY SETUP  1B',easyState);txt(20,94,'ACCELEROMETER TRIM','green',true)
+ fill(30,122,740,130,'panel');box(30,122,740,130,'line');txt(48,136,'Place the helicopter on a truly level surface.','text',true);txt(48,159,'Use trim only after FC mounting direction is correct.','orange');txt(48,184,string.format('LIVE ROLL %+.1f deg',statusLive.roll or 0),'cyan',true);txt(470,184,string.format('LIVE PITCH %+.1f deg',statusLive.pitch or 0),'orange',true)
+ local gx,gy=400,226;easyLine(gx-180,gy,gx+180,gy,'line',2);easyLine(gx,gy-32,gx,gy+18,'line',2);local px=math.max(-170,math.min(170,(statusLive.roll or 0)*5));local py=math.max(-28,math.min(16,(statusLive.pitch or 0)*2));fill(gx+px-6,gy+py-6,12,12,'green')
+ local rows={{'ROLL TRIM [0.1 deg]','roll'},{'PITCH TRIM [0.1 deg]','pitch'}};for i,r in ipairs(rows)do local y=274+(i-1)*48;txt(60,y+10,r[1],'text');button('easyTrimVal'..i,string.format('%.1f deg',easyTrimDraft[r[2]]/10),520,y+3,210,36,easyTrimFocus==i,{kind='easyTrimValue',key=r[2]},'green')end
+ button('easyTrimApply','APPLY & SAVE',400,386,180,40,easyTrimFocus==3,{kind='easyTrimApply'},'orange');button('easyTrimClose','< CLOSE',600,386,180,40,easyTrimFocus==4,{kind='easyTrimClose'},'cyan');footer('Accelerometer trim is separate from FC Roll/Pitch/Yaw mounting alignment.');if easyTrimConfirm then drawEasyTrimConfirm()end
+end
+function drawEasyAlignment()
+ header('EASY SETUP  1/12    FC MOUNTING DIRECTION',easyState);drawEasyHeli()
+ fill(430,104,350,244,'panel');box(430,104,350,244,'line')
+ button('easyLeft','< ROTATE',448,120,102,36,easyFocus==1,{kind='easyRotate',delta=-1},'cyan');button('easyRight','ROTATE >',560,120,102,36,easyFocus==2,{kind='easyRotate',delta=1},'cyan');button('easyFlip','FLIP '..(easyFlip and'BOTTOM'or'TOP'),672,120,92,36,easyFocus==3,{kind='easyFlip'},'orange')
+ local labels={{'ROLL',easyDraft.roll,'roll'},{'PITCH',easyDraft.pitch,'pitch'},{'YAW',easyDraft.yaw,'yaw'}};for i,r in ipairs(labels)do local y=166+(i-1)*45;txt(450,y+10,r[1]..' [deg]','text');button('easyAngle'..i,tostring(r[2]),620,y+4,140,34,easyFocus==i+3,{kind='easyAngle',key=r[3]},'cyan')end;txt(450,326,easyFlip and'BOARD BOTTOM UP'or'BOARD TOP UP',easyFlip and'orange'or'green',true);if not easyFlip and easyFacing==0 then txt(650,326,'R0 P0 Y0','cyan')end
+ button('easyApply','APPLY & SAVE',430,368,170,42,easyFocus==7,{kind='easyApply'},'orange');button('easyBack','< BACK',610,368,170,42,easyFocus==8,{kind='easyBack'},'cyan');footer('Touch or roller: rotate/flip preview. APPLY & SAVE writes to FC.');if easyConfirm then drawEasyConfirm()end
+end
+
 function drawSetup()
  header('SETUP',setupState);local y=104
  for i,r in ipairs(setupRows)do local enabled=r[4];fill(20,y,760,38,setupSel==i and'panel2'or'panel');box(20,y,760,38,setupSel==i and'cyan'or'line');button('setupRow'..i,r[1],28,y+4,276,30,setupSel==i,{kind='setupRow',index=i},enabled and'cyan'or'muted');txt(320,y+10,r[2],enabled and'text'or'muted');y=y+42 end
@@ -1090,7 +1184,12 @@ local function draw()
  if page=='home'then drawHome()
  elseif page=='full'then drawFullGrid()
  elseif page=='options'then drawOptions()
- elseif page=='easy'then header('EASY SETUP','PLANNED');txt(40,150,'Guided setup will be assembled after Full Setup pages are connected.','muted');button('back','< Back',650,411,130,40,false,{kind='back'});footer()
+ elseif page=='easy'then drawEasy()
+ elseif page=='easyBoardMenu'then drawEasyBoardMenu()
+ elseif page=='easyReceiver'then drawEasyReceiver()
+ elseif page=='easyServo'then easyServo.draw()
+ elseif page=='easyAlign'then drawEasyAlignment()
+ elseif page=='easyTrim'then drawEasyTrim()
  elseif page=='status'then drawStatus()
  elseif page=='setup'then drawSetup()
  elseif page=='configuration'then drawConfiguration()
@@ -1110,13 +1209,42 @@ local function draw()
  elseif page=='governor'then drawGovernor()
  elseif page=='planned'then header('PLANNED PAGE','NO FC WRITE');txt(40,150,'This page is reserved in the final setup order.','muted');button('back','< Back',650,411,130,40,false,{kind='back'});footer()
  else drawScreen(screens[page] or {title='PAGE',note='',rows={}})end
- if homeFlashConfirm then drawHomeFlashConfirm()elseif cfgNameEdit then drawCfgNameKeyboard()elseif rxWarning then drawRxWarning()elseif choiceSelect then drawChoice()elseif cfgSerialConfirm then drawCfgSerialConfirm()elseif cfgPortEdit then drawCfgPortEditor()elseif cfgSaveConfirm then drawCfgConfirm()elseif setupConfirm then drawSetupConfirm()elseif swashSelect~=nil then drawSwashSelect()elseif centerConfirm then drawCenterConfirm()elseif help then drawHelp()elseif numEdit then drawKeypad()end
+ if homeFlashConfirm then drawHomeFlashConfirm()elseif cfgNameEdit then drawCfgNameKeyboard()elseif rxWarning then drawRxWarning()elseif choiceSelect then drawChoice()elseif cfgSerialConfirm then drawCfgSerialConfirm()elseif cfgPortEdit then drawCfgPortEditor()elseif cfgSaveConfirm then drawCfgConfirm()elseif setupConfirm then drawSetupConfirm()elseif easyCalConfirm then drawEasyCalConfirm()elseif swashSelect~=nil then drawSwashSelect()elseif centerConfirm then drawCenterConfirm()elseif help then drawHelp()elseif numEdit then drawKeypad()end
 end
 local function findHit(x,y)if(getTime and getTime()or 0)<rfChoiceTouchGuard then return nil end;for i=#hit,1,-1 do local b=hit[i];if x>=b.x and x<b.x+b.w and y>=b.y and y<b.y+b.h then return b end end end
 local function findHitId(id)for i=#hit,1,-1 do if hit[i].id==id then return hit[i],i end end end
 local function activate(a)
+ if a and a.kind=='easyServo'then easyServo.activate(a);return end
+ if a and a.kind=='easyStep'and a.index==3 then ensureEasyServo();page='easyServo';easyMenuFocus=3;easyServo.open();return end
  if a and a.kind=='advanced'then ensureAdvanced();advanced.activate(a);return end
  if not a then return end
+ if a.kind=='easyStep'then easyMenuFocus=a.index;if a.index==1 then page='easyBoardMenu';easyBoardFocus=1;easyDirty=false;easyTrimDirty=false;easyState='READING FC...';cfgRead()elseif a.index==2 then page='easyReceiver';easyRxFocus=1;easyRxScroll=1;easyRxState='READING FC...';rxProtocolUnlocked=false;rxTelemetryUnlocked=false;statusLiveAt=-1000;rxRead();requestStatusLive()end;return end
+ if a.kind=='easyMenuBack'then page='home';selected=1;return end
+ if a.kind=='easyRxScroll'then easyRxScroll=math.max(1,math.min(4,easyRxScroll+a.delta));return end
+ if a.kind=='easyRxRefresh'then easyRxState='READING FC...';statusLiveAt=-1000;rxRead();requestStatusLive();return end
+ if a.kind=='easyRxBack'then page='easy';easyMenuFocus=2;return end
+ if a.kind=='easyOpenAlign'then page='easyAlign';easyFocus=1;return end
+ if a.kind=='easyOpenCal'then easyCalConfirm=true;easyCalState='CONFIRM CALIBRATION';return end
+ if a.kind=='easyCalNo'then easyCalConfirm=false;easyCalState='CALIBRATION CANCELLED';return end
+ if a.kind=='easyCalYes'then easyCalStart();return end
+ if easyCalConfirm then return end
+ if a.kind=='easyOpenMovement'then easyBoardFocus=4;attitudeBackPage='easyBoardMenu';page='statusAttitude';statusLiveAt=-1000;requestStatusLive();return end
+ if a.kind=='easyOpenTrim'then easyBoardFocus=3;page='easyTrim';easyTrimFocus=1;easyTrimDirty=false;easyState='READING ACC TRIM...';cfgRead();statusLiveAt=-1000;requestStatusLive();return end
+ if a.kind=='easyBoardClose'then page='easy';easyMenuFocus=1;return end
+ if a.kind=='easyTrimNo'then easyTrimConfirm=false;easyState='ACC TRIM SAVE CANCELLED';return end
+ if a.kind=='easyTrimYes'then easyTrimSave();return end
+ if easyTrimConfirm then return end
+ if a.kind=='easyTrimValue'then beginNumber('easyTrim',a.key,easyTrimDraft[a.key],-300,300);return end
+ if a.kind=='easyTrimApply'then easyTrimConfirm=true;return end
+ if a.kind=='easyTrimClose'then page='easyBoardMenu';easyBoardFocus=3;return end
+ if a.kind=='easyNo'then easyConfirm=false;easyState='SAVE CANCELLED';return end
+ if a.kind=='easyYes'then easySave();return end
+ if easyConfirm then return end
+ if a.kind=='easyRotate'then easyRotate(a.delta);return end
+ if a.kind=='easyFlip'then easyFlipBoard();return end
+ if a.kind=='easyAngle'then beginNumber('easy',a.key,easyDraft[a.key],-180,360);return end
+ if a.kind=='easyApply'then easyConfirm=true;return end
+ if a.kind=='easyBack'then page='easyBoardMenu';easyBoardFocus=1;return end
  if a.kind=='homeFlashNo'then homeFlashConfirm=false;homeFlashState='ERASE CANCELLED';return end
  if a.kind=='homeFlashYes'then homeFlashConfirm=false;if not homeHw.flashSupported then homeFlashState='DATAFLASH NOT AVAILABLE';return end;homeFlashState='ERASING DATAFLASH...';homeHwBusy=true;dataflashApi.eraseDataflash(function()homeHwBusy=false;homeHwAt=-1000;homeFlashState='ERASE STARTED'end,nil);return end
  if homeFlashConfirm then return end
@@ -1194,8 +1322,8 @@ local function activate(a)
  if a.kind=='mixfield'then if a.fieldKind=='swash'then swashSelect=a.value elseif a.fieldKind=='enum'then openEnumChoice(a.index,a.index=='main_rotor_dir'and'SELECT MAIN ROTOR DIRECTION'or'SELECT TAIL ROTOR TYPE') elseif a.fieldKind=='dir'then openDirectionChoice(a.index,'SELECT CONTROL DIRECTION') elseif a.fieldKind=='config'then local d=mixerConfig[a.index];beginScaledNumber('mixconfig',a.index,d.value,d.min,d.max,mixerConfigScale(a.index),false) elseif a.fieldKind=='input'then local c=string.find(a.index,':');local ix=tonumber(string.sub(a.index,1,c-1));local key=string.sub(a.index,c+1);local scale,preserve=mixerInputScale(ix,key);beginScaledNumber('mixinput',ix..':'..key,a.value,a.min,a.max,scale,preserve)end;return end
  if a.kind=='mixOverrideSlider'then if not mixerOverrideOn[a.axis]then mixerGaugeEdit=nil;mixerState='TURN OVERRIDE ON FIRST';return end;if mixerGaugeEdit==a.axis then mixerGaugeEdit=nil else mixerGaugeEdit=a.axis end;return end
  if a.kind=='mixOverrideEnable'then sendMixerOverride(a.axis,0,not mixerOverrideOn[a.axis]);return end
- if a.kind=='mixOverrideStep'then if not mixerOverrideOn[a.axis]then mixerState='TURN OVERRIDE ON FIRST';return end;local lim=a.axis==3 and((mixerConfig and mixerConfig.tail_rotor_mode.value or 0)>0 and 125 or 60)or 18;sendMixerOverride(a.axis,math.max(-lim,math.min(lim,overrideAngle(a.axis)+a.delta)),true);return end
- if a.kind=='mixOverrideValue'then if not mixerOverrideOn[a.axis]then mixerState='TURN OVERRIDE ON FIRST';return end;beginNumber('mixoverride',a.axis,math.floor(overrideAngle(a.axis)*10+.5)/10,-a.limit,a.limit);numEdit.decimals=1;numEdit.text=string.format('%.1f',numEdit.original);return end
+ if a.kind=='mixOverrideStep'then if not mixerOverrideOn[a.axis]then mixerState='TURN OVERRIDE ON FIRST';return end;local lim=a.axis==3 and((mixerConfig and mixerConfig.tail_rotor_mode.value or 0)>0 and 125 or 60)or 18;sendMixerOverride(a.axis,math.max(-lim,math.min(lim,mixerOverrideAngle(a.axis)+a.delta)),true);return end
+ if a.kind=='mixOverrideValue'then if not mixerOverrideOn[a.axis]then mixerState='TURN OVERRIDE ON FIRST';return end;beginNumber('mixoverride',a.axis,math.floor(mixerOverrideAngle(a.axis)*10+.5)/10,-a.limit,a.limit);numEdit.decimals=1;numEdit.text=string.format('%.1f',numEdit.original);return end
  if a.kind=='swashOpen'then if mixerConfig and mixerConfig.swash_type and mixerConfig.swash_type.value~=nil then swashSelect=mixerConfig.swash_type.value end;return end
  if a.kind=='mixerDirection'then openDirectionChoice(a.index,'SELECT CONTROL DIRECTION');return end
  if a.kind=='directionSave'then saveMixerInputs();return end
@@ -1235,13 +1363,14 @@ local function activate(a)
  if a.kind=='delta'then changePid(a.value);return end
  if a.kind=='pidctl'then pidSel=a.index;if a.index==18 then savePid()elseif a.index==19 then requestPid()else selectProfile()end;return end
  if help then return end
- if a.kind=='back'then if page=='receiverPreview'then page='receiver' elseif page=='statusAttitude'or page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page='full'elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1
+ if a.kind=='back'then if page=='receiverPreview'then page='receiver' elseif page=='statusAttitude'or page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page=rfEasyServoReturn and'easyServo'or'full';rfEasyServoReturn=false elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1
  elseif a.kind=='open'then selected=a.index;local list=page=='home'and home or full;local target=list[selected][3];if target=='exit'then return 2 else if target=='profiles'or target=='profileGains'or target=='rateTable'then advBackTarget=page=='home'and'home'or'full'end;page=target=='profileGains'and'profiles'or(target=='rateTable'and'rates'or target);selected=1;scroll=1;if target=='configuration'then cfgSel=2;cfgScroll=1;cfgRead()elseif target=='status'then statusLiveAt=-1000;requestInfo();requestStatusLive()elseif target=='receiver'then rxSel=2;rxScroll=1;rxProtocolUnlocked=false;rxTelemetryUnlocked=false;rxWarning=nil;statusLiveAt=-1000;rxRead()elseif target=='failsafe'then fsSel=1;fsScroll=1;fsRead()elseif target=='power'then pwTab=1;pwSel=1;pwScroll=1;pwRead()elseif target=='gyro'then gyTab=1;gySel=1;gyScroll=1;gyRead()elseif target=='rates'or target=='modes'or target=='adjustments'or target=='beeper'or target=='sensors'or target=='blackbox'then ensureAdvanced();advanced.open(target)elseif target=='profiles'then ensureAdvanced();advanced.open(target)elseif target=='profileGains'then ensureAdvanced();advanced.openGain()elseif target=='rateTable'then ensureAdvanced();advanced.openRateTable()elseif target=='servos'then servoSel=1;servoEdit=false;servoTab=1;servoSelectedId='st1';requestServos()elseif target=='mixer'then mixerMenu=false;mixerNav=1;mixerScroll=1;mixerSelectedId='mxt1';mixerCursor=2;mixerTab=1;directionSel=1;directionPass={false,false,false};directionState='READING ATTITUDE...';directionAt=-1000;requestMixerConfig()elseif target=='motors'then rfMotorTab=1;rfMotorFocus=1;rfMotorScroll=1;requestMotor()elseif target=='governor'then govTab=1;govFocus=1;govScroll=1;govRead()end end
  elseif a.kind=='option'then selected=a.index;if selected==1 then saveMode=3-saveMode elseif selected==2 then armedLock=not armedLock end end
  return 0
 end
-local function maxItems()if page=='configuration'then return #cfgRows elseif page=='configuration3d'then return #cfg3dRows elseif page=='setup'then return 8 elseif page=='servos'then return 32 elseif page=='profiles'then return 20 elseif page=='home'then return #home elseif page=='full'then return #full elseif page=='options'then return 4 else return 0 end end
+local function maxItems()if page=='configuration'then return #cfgRows elseif page=='configuration3d'then return #cfg3dRows elseif page=='setup'then return 8 elseif page=='servos'then return 32 elseif page=='profiles'then return 20 elseif page=='easyAlign'then return 8 elseif page=='easyTrim'then return 4 elseif page=='easyBoardMenu'then return 5 elseif page=='easyReceiver'then return 4 elseif page=='easy'then return 3 elseif page=='home'then return #home elseif page=='full'then return #full elseif page=='options'then return 4 else return 0 end end
 local function back()
+ if page=='easyServo'and not help then easyServo.back();return 0 end
  if help then help=false;return 0 end
  if rxWarning then rxWarning=nil;rxState='CHANGE CANCELLED';return 0 end
  if homeFlashConfirm then homeFlashConfirm=false;homeFlashState='ERASE CANCELLED';return 0 end
@@ -1250,7 +1379,10 @@ local function back()
  if cfgNameEdit then cfgNameEdit=nil;cfgState='NAME CHANGE CANCELLED';return 0 end
  if cfgSaveConfirm then cfgSaveConfirm=false;cfgState='SAVE CANCELLED';return 0 end
  if setupConfirm then setupConfirm=nil;setupState='CANCELLED';return 0 end
- if page=='home'then return 2 elseif page=='configuration3d'then page='configuration' elseif page=='statusAttitude'then page=attitudeBackPage or'status' elseif page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page='full';servoEdit=false elseif page=='profiles'then page=advBackTarget or'full';pidEditing=false  elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1;return 0
+ if easyConfirm then easyConfirm=false;easyState='SAVE CANCELLED';return 0 end
+ if easyTrimConfirm then easyTrimConfirm=false;easyState='ACC TRIM SAVE CANCELLED';return 0 end
+ if easyCalConfirm then easyCalConfirm=false;easyCalState='CALIBRATION CANCELLED';return 0 end
+ if page=='home'then return 2 elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='easyReceiver'then page='easy';easyMenuFocus=2 elseif page=='configuration3d'then page='configuration' elseif page=='statusAttitude'then page=attitudeBackPage or'status' elseif page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page=rfEasyServoReturn and'easyServo'or'full';rfEasyServoReturn=false;servoEdit=false elseif page=='profiles'then page=advBackTarget or'full';pidEditing=false  elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1;return 0
 end
 local function normalizeEvent(event)
  if (EVT_VIRTUAL_NEXT_REPT and event==EVT_VIRTUAL_NEXT_REPT)or(EVT_VIRTUAL_INC and event==EVT_VIRTUAL_INC)or(EVT_VIRTUAL_INC_REPT and event==EVT_VIRTUAL_INC_REPT)then return EVT_VIRTUAL_NEXT end
@@ -1258,10 +1390,11 @@ local function normalizeEvent(event)
  return event
 end
 local function run(event,touch)
+ if page=='easyServo'then easyServo.tick()end
  if advanced and(page=='rates'or page=='profiles'or page=='modes'or page=='adjustments'or page=='beeper'or page=='sensors'or page=='blackbox')then advanced.live()end
  if advanced and(page=='rates'or page=='profiles'or page=='modes'or page=='adjustments'or page=='beeper'or page=='sensors'or page=='blackbox')and not numEdit and not choiceSelect and not help then event=advanced.event(event)or event end
  if page=='home'and rfReady then local now=getTime and getTime()or 0;if now-homeHwAt>=100 and not homeHwBusy and rf2.mspQueue:isProcessed()then homeHwAt=now;requestHomeHardware()end end
-  if(page=='status'or page=='receiver'or page=='receiverPreview'or page=='statusAttitude'or page=='statusInstrument'or page=='configuration3d')and rfReady then local now=getTime and getTime()or 0;if now-statusLiveAt>=20 and not statusLiveBusy and rf2.mspQueue:isProcessed()then statusLiveAt=now;requestStatusLive()end end
+  if(page=='status'or page=='receiver'or page=='receiverPreview'or page=='statusAttitude'or page=='statusInstrument'or page=='configuration3d'or page=='easyTrim'or page=='easyReceiver')and rfReady then local now=getTime and getTime()or 0;if now-statusLiveAt>=20 and not statusLiveBusy and rf2.mspQueue:isProcessed()then statusLiveAt=now;requestStatusLive()end end
  if page=='power'and rfReady then local now=getTime and getTime()or 0;if now-pwLiveAt>=20 and not pwLiveBusy and rf2.mspQueue:isProcessed()then pwLiveAt=now;pwReadLive()end end
  if page=='governor'and rfReady then local now=getTime and getTime()or 0;if now-govRxAt>=10 and rf2.mspQueue:isProcessed()then govRxAt=now;rfGovReadThrottle()end end
  if page=='governor'and rfReady and not govDirty and not govCurveEdit and govCurveDrag==nil and not numEdit and not choiceSelect then local now=getTime and getTime()or 0;if now-govLiveReadAt>=100 and rf2.mspQueue:isProcessed()then govLiveReadAt=now;govLiveRead()end end
@@ -1279,11 +1412,18 @@ local function run(event,touch)
  local n=maxItems()
  if choiceSelect then if event==EVT_VIRTUAL_EXIT then choiceSelect=nil;event=0 elseif event==EVT_VIRTUAL_NEXT then choiceSelect.selected=choiceSelect.selected%#choiceSelect.items+1;event=0 elseif event==EVT_VIRTUAL_PREV then choiceSelect.selected=(choiceSelect.selected-2)%#choiceSelect.items+1;event=0 elseif event==EVT_VIRTUAL_ENTER then chooseChoice();event=0 end end
  if swashSelect~=nil then if event==EVT_VIRTUAL_EXIT then swashSelect=nil;event=0 elseif event==EVT_VIRTUAL_NEXT then swashSelect=(swashSelect+1)%7;event=0 elseif event==EVT_VIRTUAL_PREV then swashSelect=(swashSelect+6)%7;event=0 elseif event==EVT_VIRTUAL_ENTER then chooseSwash(swashSelect);event=0 end end
+ if easyCalConfirm then if event==EVT_VIRTUAL_EXIT then easyCalConfirm=false;easyCalState='CALIBRATION CANCELLED';event=0 elseif event==EVT_VIRTUAL_NEXT or event==EVT_VIRTUAL_PREV then event=0 elseif event==EVT_VIRTUAL_ENTER then easyCalStart();event=0 end end
  if setupConfirm then if event==EVT_VIRTUAL_EXIT then setupConfirm=nil;setupState='CANCELLED';event=0 elseif event==EVT_VIRTUAL_NEXT or event==EVT_VIRTUAL_PREV then setupConfirm.yes=not setupConfirm.yes;event=0 elseif event==EVT_VIRTUAL_ENTER then local i=setupConfirm.index;local yes=setupConfirm.yes;setupConfirm=nil;if yes then setupSend(setupRows[i][3])else setupState='CANCELLED'end;event=0 end end
  if centerConfirm and event==EVT_VIRTUAL_EXIT then centerConfirm=nil;event=0 end
  if numEdit then if event==EVT_VIRTUAL_EXIT then rfCancelNumber();event=0 elseif numEdit.mode=='dial'then local v=tonumber(numEdit.text)or numEdit.original;local step=numEdit.decimals==1 and(fastRepeat and 1 or 0.1)or valueStep;if event==EVT_VIRTUAL_NEXT then panelValue(v+step);event=0 elseif event==EVT_VIRTUAL_PREV then panelValue(v-step);event=0;event=0 elseif event==EVT_VIRTUAL_ENTER then commitNumber();event=0 end elseif numEdit.mode=='direct'then local actions={'1','2','3','4','5','6','7','8','9','sign','0','dot','inc01','dec01','inc','dec','delete','min','restore','max','fastdec10','clear','fastinc10','cancel','ok'};if event==EVT_VIRTUAL_NEXT then numFocus=numFocus%#actions+1;event=0 elseif event==EVT_VIRTUAL_PREV then numFocus=(numFocus-2)%#actions+1;event=0 elseif event==EVT_VIRTUAL_ENTER then directAction(actions[numFocus]);event=0 end elseif event==EVT_VIRTUAL_NEXT then numFocus=numFocus%11+1;event=0 elseif event==EVT_VIRTUAL_PREV then numFocus=(numFocus-2)%11+1;event=0 elseif event==EVT_VIRTUAL_ENTER then local actions={'min','def','sign','max','fastdec','dec','inc','fastinc','input','cancel','ok'};numberAction(actions[numFocus]);event=0 end end
   if page=='motors'and rfMotorTab==5 and rfMotorGaugeEdit and not help and not numEdit and not choiceSelect then if event==EVT_VIRTUAL_NEXT then rfSendMotorOverride(rfMotorOverridePct+1,true);event=0 elseif event==EVT_VIRTUAL_PREV then rfSendMotorOverride(rfMotorOverridePct-1,true);event=0 elseif event==EVT_VIRTUAL_ENTER then rfMotorGaugeEdit=false;event=0 end end
- if page=='gyro'and not help and not numEdit and not choiceSelect then if event==EVT_VIRTUAL_NEXT then gySel=gySel%#gyRows+1;event=0 elseif event==EVT_VIRTUAL_PREV then gySel=(gySel-2)%#gyRows+1;event=0 elseif event==EVT_VIRTUAL_ENTER then activationSource='roller';gyActivate(gySel);activationSource='touch';event=0 end end
+ if page=='easyServo'and not help and not numEdit and not choiceSelect then activationSource='roller';event=easyServo.event(event,touch);activationSource='touch'end
+ if page=='easy'and not help then if event==EVT_VIRTUAL_NEXT then easyMenuFocus=easyMenuFocus%(#easySteps+1)+1;event=0 elseif event==EVT_VIRTUAL_PREV then easyMenuFocus=(easyMenuFocus-2)%(#easySteps+1)+1;event=0 elseif event==EVT_VIRTUAL_ENTER then if easyMenuFocus<=#easySteps then activate({kind='easyStep',index=easyMenuFocus})else page='home';selected=1 end;event=0 end end
+ if page=='easyReceiver'and not help then if event==EVT_VIRTUAL_NEXT then easyRxFocus=easyRxFocus%4+1;event=0 elseif event==EVT_VIRTUAL_PREV then easyRxFocus=(easyRxFocus-2)%4+1;event=0 elseif event==EVT_VIRTUAL_ENTER then if easyRxFocus==1 then easyRxScroll=math.max(1,easyRxScroll-1)elseif easyRxFocus==2 then easyRxScroll=math.min(4,easyRxScroll+1)elseif easyRxFocus==3 then easyRxState='READING FC...';statusLiveAt=-1000;rxRead();requestStatusLive()else page='easy';easyMenuFocus=2 end;event=0 end end
+ if page=='easyBoardMenu'and not easyCalConfirm and not help then if event==EVT_VIRTUAL_NEXT then easyBoardFocus=easyBoardFocus%5+1;event=0 elseif event==EVT_VIRTUAL_PREV then easyBoardFocus=(easyBoardFocus-2)%5+1;event=0 elseif event==EVT_VIRTUAL_ENTER then if easyBoardFocus==1 then page='easyAlign';easyFocus=1 elseif easyBoardFocus==2 then easyCalConfirm=true;easyCalState='CONFIRM CALIBRATION' elseif easyBoardFocus==3 then page='easyTrim';easyTrimFocus=1;easyTrimDirty=false;easyState='READING ACC TRIM...';cfgRead();statusLiveAt=-1000;requestStatusLive()elseif easyBoardFocus==4 then attitudeBackPage='easyBoardMenu';page='statusAttitude';statusLiveAt=-1000;requestStatusLive()else page='easy';easyMenuFocus=1 end;event=0 end end
+ if page=='easyTrim'and not easyTrimConfirm and not help and not numEdit then if event==EVT_VIRTUAL_NEXT then easyTrimFocus=easyTrimFocus%4+1;event=0 elseif event==EVT_VIRTUAL_PREV then easyTrimFocus=(easyTrimFocus-2)%4+1;event=0 elseif event==EVT_VIRTUAL_ENTER then if easyTrimFocus<=2 then local k=easyTrimFocus==1 and'roll'or'pitch';activationSource='roller';beginNumber('easyTrim',k,easyTrimDraft[k],-300,300);activationSource='touch'elseif easyTrimFocus==3 then easyTrimConfirm=true else page='easyBoardMenu';easyBoardFocus=2 end;event=0 end end
+ if page=='easyAlign'and not easyConfirm and not help and not numEdit then if event==EVT_VIRTUAL_NEXT then easyFocus=easyFocus%8+1;event=0 elseif event==EVT_VIRTUAL_PREV then easyFocus=(easyFocus-2)%8+1;event=0 elseif event==EVT_VIRTUAL_ENTER then if easyFocus==1 then easyRotate(-1)elseif easyFocus==2 then easyRotate(1)elseif easyFocus==3 then easyFlipBoard()elseif easyFocus<=6 then local k=({'roll','pitch','yaw'})[easyFocus-3];activationSource='roller';beginNumber('easy',k,easyDraft[k],-180,360);activationSource='touch'elseif easyFocus==7 then easyConfirm=true else page='home';selected=1 end;event=0 end end
+  if page=='gyro'and not help and not numEdit and not choiceSelect then if event==EVT_VIRTUAL_NEXT then gySel=gySel%#gyRows+1;event=0 elseif event==EVT_VIRTUAL_PREV then gySel=(gySel-2)%#gyRows+1;event=0 elseif event==EVT_VIRTUAL_ENTER then activationSource='roller';gyActivate(gySel);activationSource='touch';event=0 end end
  if page=='power'and not help and not numEdit and not choiceSelect then if event==EVT_VIRTUAL_NEXT then pwSel=pwSel%#pwRows+1;event=0 elseif event==EVT_VIRTUAL_PREV then pwSel=(pwSel-2)%#pwRows+1;event=0 elseif event==EVT_VIRTUAL_ENTER then pwActivate(pwSel);event=0 end end
  if page=='failsafe'and not help and not numEdit and not choiceSelect then if event==EVT_VIRTUAL_NEXT then fsSel=fsSel%#fsRows+1;event=0 elseif event==EVT_VIRTUAL_PREV then fsSel=(fsSel-2)%#fsRows+1;event=0 elseif event==EVT_VIRTUAL_ENTER then fsActivate(fsSel);event=0 end end
  if page=='receiver'and not rxWarning and not help and not numEdit and not choiceSelect then if event==EVT_VIRTUAL_NEXT then rxSel=rxSel%#rxRows+1;event=0 elseif event==EVT_VIRTUAL_PREV then rxSel=(rxSel-2)%#rxRows+1;event=0 elseif event==EVT_VIRTUAL_ENTER then activationSource='roller';rxActivate(rxSel);activationSource='touch';event=0 end end
@@ -1308,7 +1448,7 @@ local function run(event,touch)
   elseif event==EVT_VIRTUAL_ENTER then if pidSel<=17 then pidEditing=not pidEditing;if not pidEditing and saveMode==2 then savePid()end elseif pidSel==18 then savePid()elseif pidSel==19 then requestPid()else selectProfile()end end
   if event==EVT_VIRTUAL_NEXT or event==EVT_VIRTUAL_PREV or event==EVT_VIRTUAL_ENTER then event=0 end
  end
- if page=='mixer'and mixerGaugeEdit and not help and not numEdit then local lim=mixerGaugeEdit==3 and((mixerConfig and mixerConfig.tail_rotor_mode.value or 0)>0 and 125 or 60)or 18;local step=fastRepeat and 1 or 0.1;if event==EVT_VIRTUAL_NEXT then sendMixerOverride(mixerGaugeEdit,math.min(lim,overrideAngle(mixerGaugeEdit)+step),true);event=0 elseif event==EVT_VIRTUAL_PREV then sendMixerOverride(mixerGaugeEdit,math.max(-lim,overrideAngle(mixerGaugeEdit)-step),true);event=0 elseif event==EVT_VIRTUAL_ENTER then mixerGaugeEdit=nil;event=0 end end
+ if page=='mixer'and mixerGaugeEdit and not help and not numEdit then local lim=mixerGaugeEdit==3 and((mixerConfig and mixerConfig.tail_rotor_mode.value or 0)>0 and 125 or 60)or 18;local step=fastRepeat and 1 or 0.1;if event==EVT_VIRTUAL_NEXT then sendMixerOverride(mixerGaugeEdit,math.min(lim,mixerOverrideAngle(mixerGaugeEdit)+step),true);event=0 elseif event==EVT_VIRTUAL_PREV then sendMixerOverride(mixerGaugeEdit,math.max(-lim,mixerOverrideAngle(mixerGaugeEdit)-step),true);event=0 elseif event==EVT_VIRTUAL_ENTER then mixerGaugeEdit=nil;event=0 end end
  if page=='mixer'and not help and not numEdit and not swashSelect and not choiceSelect then if event==EVT_VIRTUAL_NEXT then if mixerSelectedId and string.sub(mixerSelectedId,1,3)=='mxr'and mixerNav<mixerRowCount then mixerNav=math.min(mixerRowCount,mixerNav+navStep);mixerSelectedId='mxr'..mixerNav else mixerCursor=mixerCursor%#hit+1;local b=hit[mixerCursor];mixerSelectedId=b and b.id or nil;if b and string.sub(b.id,1,3)=='mxr'then mixerNav=tonumber(string.sub(b.id,4))or mixerNav end end;event=0 elseif event==EVT_VIRTUAL_PREV then if mixerSelectedId and string.sub(mixerSelectedId,1,3)=='mxr'and mixerNav>1 then mixerNav=math.max(1,mixerNav-navStep);mixerSelectedId='mxr'..mixerNav else mixerCursor=(mixerCursor-2)%#hit+1;local b=hit[mixerCursor];mixerSelectedId=b and b.id or nil;if b and string.sub(b.id,1,3)=='mxr'then mixerNav=tonumber(string.sub(b.id,4))or mixerNav end end;event=0 elseif event==EVT_VIRTUAL_ENTER then local b,ix=findHitId(mixerSelectedId);if not b then b=hit[mixerCursor]else mixerCursor=ix end;if b then activationSource='roller';activate(b.action);activationSource='touch'end;event=0 end end
  if page=='mixer'and mixerTab==2 and not help then if event==EVT_VIRTUAL_NEXT then directionSel=directionSel%8+1;event=0 elseif event==EVT_VIRTUAL_PREV then directionSel=(directionSel-2)%8+1;event=0 elseif event==EVT_VIRTUAL_ENTER then if directionSel<=3 then directionPass[directionSel]=not directionPass[directionSel];event=0 elseif directionSel<=6 then toggleDirection(directionSel-3);event=0 elseif directionSel==7 then saveMixerInputs();event=0 elseif directionSel==8 then local r=back();draw();return r else event=0 end end end
  if event==EVT_VIRTUAL_EXIT then local r=back();draw();return r end
@@ -1327,11 +1467,13 @@ local function run(event,touch)
    elseif EVT_TOUCH_SLIDE and event==EVT_TOUCH_SLIDE and overrideDrag~=nil then updateOverrideSlider(overrideDrag,touch.x,false)
    elseif EVT_TOUCH_BREAK and event==EVT_TOUCH_BREAK then if homeFlashHolding then local now=getTime and getTime()or 0;local held=now-(homeFlashHoldAt or now);homeFlashHolding=false;homeFlashHoldAt=nil;touchDown=nil;if held>=80 and homeHw.flashSupported then homeFlashConfirm=true;homeFlashState=''elseif held>=80 then homeFlashState='DATAFLASH NOT AVAILABLE'end elseif advancedRangeDrag then advanced.rangeEnd();advancedRangeDrag=nil;touchDown=nil elseif rfModalTouchAction then local ma=rfModalTouchAction;rfModalTouchAction=nil;touchDown=nil;activationSource='touch';activate(ma) elseif pageSwipe then if not pageSwipe.moved then if pageSwipe.gyro then if pageSwipe.action then gyActivate(pageSwipe.action.index or gySel)end elseif pageSwipe.config then if pageSwipe.action then cfgActivate(pageSwipe.action.index or cfgSel)end elseif pageSwipe.power then if pageSwipe.action then pwActivate(pageSwipe.action.index or pwSel)end elseif pageSwipe.failsafe then if pageSwipe.action then if pageSwipe.action.kind=='fsSet'then local d=fsData[pageSwipe.action.channel];if d then beginNumber('failsafe','set'..pageSwipe.action.channel,d.value,875,2125)end else fsActivate(pageSwipe.action.index or fsSel)end end elseif pageSwipe.receiver then if pageSwipe.action then rxActivate(pageSwipe.action.index or rxSel)end elseif pageSwipe.id then mixerSelectedId=pageSwipe.id;local n=tonumber(string.match(pageSwipe.id,'mxr(%d+)'));if n then mixerNav=n end end;if pageSwipe.action and not pageSwipe.config and not pageSwipe.receiver and not pageSwipe.failsafe and not pageSwipe.power and not pageSwipe.gyro then activationSource='touch';activate(pageSwipe.action)end else local now=getTime and getTime()or 0;if now-pageSwipe.lastAt<=12 and pageSwipe.lastStep>1 then swipeMomentum=pageSwipe.dir*math.min(3,pageSwipe.lastStep-1);swipeNext=now+3 end end;pageSwipe=nil;touchDown=nil elseif govCurveDrag~=nil then govApi.write(govConfig);govRefresh();govCurveDrag=nil
  elseif rfMotorDrag then local q=math.max(0,math.min(1,((rfMotorLastX or touch.x)-sx(90))/sx(570)));rfSendMotorOverride(q*100,true);rfMotorDrag=false;rfMotorLastX=nil elseif mixerDrag then local q=math.max(0,math.min(1,((mixerLastX or touch.x)-sx(300))/sx(330)));sendMixerOverride(mixerDrag.axis,-mixerDrag.limit+q*mixerDrag.limit*2,true);mixerDrag=nil;mixerLastX=nil end;if overrideDrag~=nil then updateOverrideSlider(overrideDrag,overrideLastX or touch.x,true);overrideDrag=nil;overrideLastX=nil end;touchDown=nil
-   elseif EVT_TOUCH_TAP and event==EVT_TOUCH_TAP then local b=findHit(touch.x,touch.y);local now=getTime and getTime()or 0;if b and not(now-lastTouchAt<30)then local r=activate(b.action);lastTouchId=b.id;lastTouchAt=now;if r==2 then return 2 end end end
+   elseif EVT_TOUCH_TAP and event==EVT_TOUCH_TAP then local b=findHit(touch.x,touch.y);if b and lastTouchId==b.id then lastTouchId=nil elseif b then local r=activate(b.action);lastTouchId=nil;if r==2 then return 2 end end end
  end
  draw();return 0
 end
 rfLogo=Bitmap and Bitmap.open and Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/RFLOGO.png')or nil
+easyNexusBmps=Bitmap and Bitmap.open and{Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXR0.png'),Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXR1.png'),Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXR2.png'),Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXR3.png')}or nil
+easyNexusBackBmps=Bitmap and Bitmap.open and{Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXRB0.png'),Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXRB1.png'),Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXRB2.png'),Bitmap.open('/SCRIPTS/RFLUASETUP/ASSETS/NEXUSXRB3.png')}or nil
 advanced=nil
 advHost={
  header=header,footer=footer,button=button,fill=fill,box=box,txt=txt,hit=function(id,x,y,w,h,a)add(id,x,y,w,h,a)end,line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),col(c))end end,
@@ -1341,7 +1483,69 @@ advHost={
  autoSave=function()return saveMode==2 end,save=function(statecb)rf2.mspQueue:add({command=250,processReply=function()statecb('SAVED TO FC EEPROM')end,errorHandler=function()statecb('SAVE FAILED - DISARM FC')end})end
 }
 function ensureAdvanced()if type(advanced)=='table'then return end;local c=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/advanced.lua'));local factory=c();c=nil;advanced=factory(advHost);factory=nil;collectgarbage()end
+easyServo=nil
+rfEasyServoReturn=false
+function ensureEasyServo()
+ if easyServo then return end
+ easyServo=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/centerTrim.lua'))()({
+  header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,line=function(x1,y1,x2,y2,c)statusDotLine(x1,y1,x2,y2,c,3)end,
+  clearHits=function()hit={}end,
+  coords=function(x,y)return x*800/(LCD_W or W),y*480/(LCD_H or H)end,
+  ready=function()return rfReady end,servos=function()return servoApi end,mixer=function()return mixerApi end,
+  override=sendOverride,
+  disable=disableOverrides,
+  fullOverride=function()rfEasyServoReturn=true;page='servos';servoTab=3;requestServos()end,
+  fullServos=function()rfEasyServoReturn=true;page='servos';servoTab=1;servoSel=1;servoEdit=false;servoSelectedId='st1';requestServos()end,
+  choice=openChoice,
+  number=function(key,value,min,max)
+   beginNumber('easyServo',key,value,min,max)
+   if string.sub(key,1,3)=='in:'or string.sub(key,1,4)=='cfg:'or key=='angle'then numEdit.decimals=1;numEdit.text=string.format('%.1f',value)end
+  end,
+  back=function()page='easy';easyMenuFocus=3 end
+ })
+end
 return {run=run}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

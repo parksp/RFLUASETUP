@@ -20,11 +20,13 @@ local function getDefaults()
  return defaults
 end
 
-local function getMixerConfig(callback, callbackParam, data)
+local function getMixerConfig(callback, callbackParam, data, onError)
     data = data or getDefaults()
     local message = {
         command = 42, -- MSP_MIXER_CONFIG
+        errorHandler = onError,
         processReply = function(self, buf)
+            if onError and #buf < (rf2.apiVersion >= 12.08 and 21 or 19) then onError(); return end
             data.main_rotor_dir.value = rf2.mspHelper.readU8(buf)
             data.tail_rotor_mode.value = rf2.mspHelper.readU8(buf)
             data.tail_motor_idle.value = rf2.mspHelper.readU8(buf)
@@ -49,9 +51,11 @@ local function getMixerConfig(callback, callbackParam, data)
     rf2.mspQueue:add(message)
 end
 
-local function setMixerConfig(data)
+local function setMixerConfig(data, onSaved, onError)
     local message = {
         command = 43, -- MSP_SET_MIXER_CONFIG
+        processReply = onSaved,
+        errorHandler = onError,
         payload = {},
         
     }
