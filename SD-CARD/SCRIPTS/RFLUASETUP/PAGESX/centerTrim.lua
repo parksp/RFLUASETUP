@@ -84,7 +84,7 @@ return function(h)
    cfg=copy(d);ready=true;busy=false;state='SELECT S1 / S2 / S3';if done then done()end
   end,nil,function()if token==epoch then busy=false;blocked=true;state='READ FAILED / RTN TO RETRY'end end)
  end
- function M.open()page='menu';focus=1;state='SELECT CENTER TRIM'end
+ function M.open(message)page='menu';focus=1;state='SELECT CENTER TRIM';if message then notice=message end end
  local function submenu()
   page='menu';ready=false;blocked=false;exitAfter=false;returnAt=nil;focus=1;state='OVERRIDES RELEASED'
  end
@@ -282,6 +282,8 @@ return function(h)
   end
   if busy then return end
   if page=='menu'and a.key=='custom'then h.fullServos();return end
+  if page=='menu'and a.key=='mainrotor'then h.mainRotor();return end
+  if page=='menu'and a.key=='geometry'then h.geometry();return end
   if page=='menu'and a.key=='defaults'then
    page='defaults';ready=false;blocked=false;exitAfter=false;defaultReview=false;pulseChosen=false;defaultTab=1;edit=false;focus=1
    if not h.ready()then state='FC OFFLINE / RTN TO RETRY';return end
@@ -371,8 +373,10 @@ return function(h)
    btn('1. SWASH SERVO DEFAULT SETUP',20,112,760,70,'defaults')
    btn('',20,204,552,94,'enter');h.txt(36,225,'2. SERVO REVERSE SETUP /','text',true);h.txt(36,256,'SERVO CENTER PULSE TRIM','text',true)
    btn('',590,204,190,94,'custom');h.txt(608,225,'CUSTOM FINE','cyan',true);h.txt(608,256,'SERVO SETUP','cyan',true)
-   if notice then h.txt(20,330,notice,'orange');h.txt(20,357,'Check FC power and saved values before reconnecting.','orange')end
-   h.footer('RTN: previous menu');return
+   btn('3. MAIN ROTOR / SWASH DIRECTION',20,318,760,48,'mainrotor')
+   btn('4. MAIN ROTOR GEOMETRY',20,380,760,48,'geometry')
+   if notice then h.txt(20,94,notice,'orange')end
+   h.footer(notice and'Check FC power and saved values before reconnecting.'or'RTN: previous menu');return
   end
   if page=='mount'then
    h.txt(80,132,'IS THE ELEVATOR SERVO AT THE FRONT OR REAR?','text',true)

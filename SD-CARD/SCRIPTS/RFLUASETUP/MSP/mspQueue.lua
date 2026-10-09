@@ -115,7 +115,8 @@ function MspQueueController:processQueue()
         self.currentMessage.buf = buf
         if self.currentMessage.postSendDelay then return end
         self:handleReply()
-    elseif (err and not self.currentMessage.ignoreErrors) or (self.maxRetries >= 0 and self.retryCount > self.maxRetries) then
+    -- A delayed rejection belongs to its command, not to the request now in flight.
+    elseif (cmd == self.currentMessage.command and err and not self.currentMessage.ignoreErrors) or (self.maxRetries >= 0 and self.retryCount > self.maxRetries) then
         --rf2.print("Error or max retries reached, aborting cmd "..self.currentMessage.command)
         if self.currentMessage.errorHandler then
             self.currentMessage:errorHandler()
