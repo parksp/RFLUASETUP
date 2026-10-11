@@ -1,6 +1,71 @@
 # RFLUASETUP
 
-[한국어](#rfluasetup) · [English](#english)
+[English](#english) · [한국어](#한국어)
+
+## English
+
+RFLUASETUP is an EdgeTX transmitter Lua interface developed from the menus and configuration workflow of Rotorflight Configurator 2.3.0. The goal is to make as much of the Configurator as practical available directly from the transmitter.
+
+This is **0.7.29 BETA — unfinished, work in progress**. **Easy Setup includes Main Rotor Geometry and dedicated Tail Setup at an intermediate stage.** It is not a complete helicopter setup wizard and does not establish flight readiness.
+
+[Download 0.7.29 BETA](https://github.com/parksp/RFLUASETUP/releases/tag/v0.7.29-beta) · [Bilingual release notes](RELEASE-0.7.29-BILINGUAL.md)
+
+### Easy Setup progress
+
+- Main Rotor Geometry: independent axis overrides, calibration and swash trim. RETURN restores unsaved values.
+- Tail Setup: servo/motor tail defaults and rotor settings, single-press override ON/OFF and a horizontal slider. RETURN → DISCARD restores unsaved live edits.
+
+- Swash servo defaults: 1520/760 pulse presets, Rate/Speed, per-servo Reverse, Limits/Scale/Geo, with an overwrite warning and confirmation before saving.
+- Servo reverse and center-pulse trim: FRONT/REAR choice, nose-direction indicators, measured output pulses and confirmed Center Apply.
+- Keep overrides enabled while trimming any green-selected S1/S2/S3 subset; red servos hold their current positions. ALL selection and AILERON/ELEVATOR trim are available.
+- Later Easy Setup stages are not complete. **This release is not a finished, flight-validated setup solution.**
+
+Current changes were checked with a simulated FC, Lua event tests, rendered screens and syntax checks. They are not fully validated on physical aircraft/transmitters. Disconnect the motor and remove blades for bench testing; check manufacturer servo specifications and compare settings with the PC Configurator.
+
+**TX16S MK2:** The user reports a brief run/operation check and that the tool appears to work. This is only a preliminary user observation, not full feature, safety or long-term validation.
+
+The current test target is RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware. Other hardware and firmware combinations are not guaranteed.
+### Installation Requirements
+
+- RadioMaster TX16S MK3
+- The currently tested EdgeTX environment on that transmitter
+- NEXUS Gyro
+- The currently tested Rotorflight 4.6.x firmware
+- Rotorflight Configurator 2.3.0 as the comparison reference
+- Working receiver telemetry and MSP communication
+- Installation path `/SCRIPTS/RFLUASETUP`
+
+Other transmitters, display sizes, FCs, receivers, telemetry protocols, and firmware versions remain unverified. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
+
+See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.29-BILINGUAL.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
+
+## Main Areas
+
+- Status and live receiver channels
+- Setup and Configuration
+- Receiver, telemetry sensors, Failsafe and Power
+- Motors, RPM gear ratio and motor override
+- Governor and bypass curve
+- Servos and Mixer
+- Gyro, Rates and PID Profiles
+- Modes and Adjustments
+- Beepers, Sensors and Blackbox
+
+## Collaboration
+
+Bug reports, test results, translations and code improvements are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting an issue or pull request.
+
+## Credits
+
+Created by **BLADE PARK**. This independent Lua project is based on the behavior and public source of Rotorflight Configurator and Rotorflight firmware. Rotorflight names, logos and upstream source remain the property of their respective owners and contributors.
+
+## License
+
+Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
+
+---
+
+## 한국어
 
 RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식을 분석하여 EdgeTX 조종기용 Lua 인터페이스로 구현한 프로젝트입니다. 가능한 한 많은 Configurator 기능을 PC 없이 조종기에서 확인하고 설정할 수 있도록 만드는 것이 목표입니다.
 
@@ -85,62 +150,3 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 6. 상단의 `FC LINK`와 하단의 `0.7.29 BETA`를 확인합니다.
 
 자세한 내용은 [한국어 설치 안내](설치방법.txt)와 [최신 한글·영문 변경 안내](RELEASE-0.7.29-BILINGUAL.md)를 참고하십시오. [0.6.33 한국어 사용자 매뉴얼](docs/RFLUASETUP-0.6.33-한국어-사용자-매뉴얼.docx)은 이전 버전 참고용입니다.
-
-## English
-
-RFLUASETUP is an EdgeTX transmitter Lua interface developed from the menus and configuration workflow of Rotorflight Configurator 2.3.0. The goal is to make as much of the Configurator as practical available directly from the transmitter.
-
-This is **0.7.29 BETA — unfinished, work in progress**. **Easy Setup includes Main Rotor Geometry and dedicated Tail Setup at an intermediate stage.** It is not a complete helicopter setup wizard and does not establish flight readiness.
-
-### Easy Setup progress
-
-- Swash servo defaults: 1520/760 pulse presets, Rate/Speed, per-servo Reverse, Limits/Scale/Geo, with an overwrite warning and confirmation before saving.
-- Servo reverse and center-pulse trim: FRONT/REAR choice, nose-direction indicators, measured output pulses and confirmed Center Apply.
-- Keep overrides enabled while trimming any green-selected S1/S2/S3 subset; red servos hold their current positions. ALL selection and AILERON/ELEVATOR trim are available.
-- Later Easy Setup stages are not complete. **This release is not a finished, flight-validated setup solution.**
-
-Current changes were checked with a simulated FC, Lua event tests, rendered screens and syntax checks. They are not fully validated on physical aircraft/transmitters. Disconnect the motor and remove blades for bench testing; check manufacturer servo specifications and compare settings with the PC Configurator.
-
-**TX16S MK2:** The user reports a brief run/operation check and that the tool appears to work. This is only a preliminary user observation, not full feature, safety or long-term validation.
-
-The current test target is RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware. Other hardware and firmware combinations are not guaranteed.
-### Installation Requirements
-
-- RadioMaster TX16S MK3
-- The currently tested EdgeTX environment on that transmitter
-- NEXUS Gyro
-- The currently tested Rotorflight 4.6.x firmware
-- Rotorflight Configurator 2.3.0 as the comparison reference
-- Working receiver telemetry and MSP communication
-- Installation path `/SCRIPTS/RFLUASETUP`
-
-Other transmitters, display sizes, FCs, receivers, telemetry protocols, and firmware versions remain unverified. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
-
-See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.29-BILINGUAL.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
-
-## Main Areas
-
-- Status and live receiver channels
-- Setup and Configuration
-- Receiver, telemetry sensors, Failsafe and Power
-- Motors, RPM gear ratio and motor override
-- Governor and bypass curve
-- Servos and Mixer
-- Gyro, Rates and PID Profiles
-- Modes and Adjustments
-- Beepers, Sensors and Blackbox
-
-## Collaboration
-
-Bug reports, test results, translations and code improvements are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting an issue or pull request.
-
-## Credits
-
-Created by **BLADE PARK**. This independent Lua project is based on the behavior and public source of Rotorflight Configurator and Rotorflight firmware. Rotorflight names, logos and upstream source remain the property of their respective owners and contributors.
-
-## License
-
-Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
-
-
-
