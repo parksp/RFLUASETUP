@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.29 BETA
+
+- Add dedicated servo/motor Tail Setup and Main Rotor Geometry; see RELEASE-0.7.29-BILINGUAL.md for changes since the last published release.
+- Improve live-edit response and compatible mixer input reads. Restore unsaved Geometry on RETURN and Tail on DISCARD, preserving unrelated directions and limits.
+- Single-press Tail override, release-coordinate slider fix, numeric roller/direct entry and native drawing fixes.
+- Mock UI/FC regressions and 150 Lua syntax checks pass; physical validation remains incomplete.
+
+
 ## 0.6.91 BETA
 
 - Multiple green trim targets can be selected independently of held red overrides. Tapping an enabled servo toggles only its trim selection, never disables or recenters it. All seven nonempty subsets use same-sign increments while preserving their existing relative offsets.

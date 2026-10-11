@@ -3,7 +3,7 @@ return function(h)
  local M={}
  local steps={'SWASH','COLL DIR','SERVOS','TRIM','COLLECTIVE','CYCLIC','TAIL'}
  local step=1
- local inputs={}
+ local inputs={};local originalServo,originalInputs={},{}
  local editedServo,editedMix,editedInput={},{},{}
  local mixTest=false
  local testAxis,testValue=4,0
@@ -74,12 +74,8 @@ return function(h)
   if allMode then disable()elseif active~=nil then h.override(active,0,true,disable,disable)else disable()end
  end
  local function readInputs(done,onError)
-  queue(170,nil,function(_,b)
-   if #b<30 or #b%6~=0 then onError();return end
-   b.offset=1;local t={}
-   for i=0,#b/6-1 do t[i]={rate=rf2.mspHelper.readS16(b),min=rf2.mspHelper.readS16(b),max=rf2.mspHelper.readS16(b)}end
-   done(t)
-  end,onError)
+  rf2.mixerInputsApi=rf2.mixerInputsApi or rf2.useApi('mspMixerInputs')
+  rf2.mixerInputsApi.read(done,onError)
  end
  local function flushOverride()
   if busy or overridePending or active==nil or nextAngle==nil then return end
@@ -113,10 +109,10 @@ return function(h)
     if not d[i] then failed('NEED AT LEAST 3 SERVOS');return end
     for _,key in ipairs(fields)do if not d[i][key]or d[i][key].value==nil then failed('INCOMPLETE SERVO DATA');return end end
    end
-   draft=copy(d)
+   draft=copy(d);originalServo=copy(d)
    h.mixer().read(function(_,m)
     mix=copy(m)
-    readInputs(function(t)inputs=t;editedServo={};editedMix={};editedInput={};ready=true;busy=false;dirty=false;state='FC VALUES / NOT EDITED'end,
+    readInputs(function(t)inputs=t;originalInputs=copy(t);editedServo={};editedMix={};editedInput={};ready=true;busy=false;dirty=false;state='FC VALUES / NOT EDITED'end,
      function()failed('INPUT READ FAILED / RELOAD')end)
    end,nil,nil,
     function()failed('MIXER READ FAILED / RELOAD')end)
@@ -140,7 +136,7 @@ return function(h)
      for i in pairs(editedInput)do for _,key in ipairs({'rate','min','max'})do
       if gotInput[i][key]~=inputs[i][key]then failed('SAVED / INPUT MISMATCH');return end
      end end
-     busy=false;dirty=false;editedServo={};editedMix={};editedInput={};state='SAVED / VERIFIED'
+     draft=copy(got);inputs=gotInput;originalServo=copy(got);originalInputs=copy(gotInput);busy=false;dirty=false;editedServo={};editedMix={};editedInput={};state='SAVED / VERIFIED'
     end,function()failed('SAVED / INPUT VERIFY FAILED')end)
    end,nil,nil,function()failed('SAVED / VERIFY READ FAILED')end)
   end,nil,function()failed('SAVED / VERIFY READ FAILED')end)
@@ -172,7 +168,31 @@ return function(h)
      end,nil,nil,function()failed('PARTIAL APPLY / MIXER READ FAIL')end)
     end
    end
-   writeServo(0)
+   -- Merge explicit edits into fresh FC blocks; preserve untouched direction bits.
+   h.servos().getServoConfigurations(function(_,fresh)
+    for i in pairs(editedServo)do
+     if not fresh[i]or not originalServo[i]then failed('SERVO REFRESH FAILED / NO WRITE');return end
+     for _,k in ipairs(fields)do
+      local wanted,old=draft[i][k].value,originalServo[i][k].value
+      if k=='flags'then
+       local mask=bit32.bxor(wanted,old)
+       fresh[i][k].value=bit32.bor(bit32.band(fresh[i][k].value,bit32.bxor(mask,65535)),bit32.band(wanted,mask))
+      elseif wanted~=old then fresh[i][k].value=wanted end
+     end
+     if fresh[i].min.value>=fresh[i].max.value then failed('REFRESHED LIMITS INVALID / NO WRITE');return end
+     draft[i]=fresh[i]
+    end
+    readInputs(function(current)
+     for i in pairs(editedInput)do
+      local d,old=current[i],originalInputs[i]
+      if not d or not old then failed('INPUT REFRESH FAILED / NO WRITE');return end
+      if (d.rate<0)~=(old.rate<0)then failed('INPUT DIRECTION CHANGED / RELOAD');return end
+      for _,k in ipairs({'rate','min','max'})do if inputs[i][k]~=old[k]then d[k]=inputs[i][k]end end
+      inputs[i]=d
+     end
+     writeServo(0)
+    end,function()failed('INPUT REFRESH FAILED / NO WRITE')end)
+   end,nil,function()failed('SERVO REFRESH FAILED / NO WRITE')end)
   end)end)
  end
  local function leave()stop(function()h.back()end)end

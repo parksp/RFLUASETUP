@@ -156,6 +156,9 @@ end
 
 local function mspClearRxTxBufs()
     mspTxBuf = {}
+    mspTxIdx = 1; mspTxCRC = 0
+    mspRxBuf = {}; mspRxSize = 0; mspRxCRC = 0; mspRxReq = 0
+    mspStarted = false; mspLastReq = 0; mspRxError = false
     while mspPoll() do end
 end
 

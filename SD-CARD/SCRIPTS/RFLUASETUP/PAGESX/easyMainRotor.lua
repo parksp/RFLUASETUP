@@ -13,11 +13,8 @@ return function(h)
  local function queue(cmd,payload,ok)rf2.mspQueue:add({command=cmd,payload=payload,processReply=ok,errorHandler=function()fail('FC ERROR / RETRY')end})end
  local function read(done)
   h.mixer().read(function(_,c)
-   queue(170,nil,function(_,b)
-    if #b<30 or #b%6~=0 then fail('INPUT READ ERROR');return end
-    b.offset=1;local t={};for i=0,#b/6-1 do t[i]={rate=rf2.mspHelper.readS16(b),min=rf2.mspHelper.readS16(b),max=rf2.mspHelper.readS16(b)}end
-    done(c,t)
-   end)
+   rf2.mixerInputsApi=rf2.mixerInputsApi or rf2.useApi('mspMixerInputs')
+   rf2.mixerInputsApi.read(function(t)done(c,t)end,function(err)fail('INPUT READ ERROR / '..(err or'REOPEN'))end)
   end,nil,nil,function()fail('MIXER READ ERROR')end)
  end
  local function release(done)

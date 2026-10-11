@@ -105,7 +105,7 @@ return function(h)
    if token~=epoch then return end
    if i>2 then
     flight=false
-    if now()-lastPWM>=20 and not busy then sample(function()flush();drain()end)
+    if not pending and now()-lastPWM>=20 and not busy then sample(function()flush();drain()end)
     else flush();drain()end
     return
    end
@@ -125,9 +125,12 @@ return function(h)
  end
  local function finishWrite(msg)
   transaction=false;busy=false;state=msg
+  if page=='defaults'then
+   for i=0,2 do for _,k in ipairs(fields)do draft[i][k]=cfg[i][k].value end end
+  end
   if exitAfter then exitAfter=false;stop(submenu)end
  end
- local function writeSelected(patches,success)
+ local function writeSelected(patches,success,flagMasks)
   -- Refresh full configs immediately before selective writes; preserve rate, limits and tail.
   transaction=true;busy=true;local token=epoch
   h.servos().getServoConfigurations(function(_,fresh)
@@ -137,6 +140,10 @@ return function(h)
     for k,v in pairs(p)do
      local d=fresh[i][k]
      if not d or v<d.min or v>d.max then transaction=false;fail('CENTER / FLAGS OUT OF RANGE');return end
+     if k=='flags'and flagMasks and flagMasks[i]then
+      local mask=flagMasks[i]
+      v=bit32.bor(bit32.band(d.value,bit32.bxor(mask,65535)),bit32.band(v,mask));p[k]=v
+     end
      d.value=v
     end
    end
@@ -296,8 +303,8 @@ return function(h)
    if not ready or blocked then return end
    if defaultReview then
     if a.key=='cancel'then defaultReview=false;state='DRAFT / NOT SAVED'
-    elseif a.key=='confirm'then local patches=copy(draft);defaultReview=false;stop(function()
-     if exitAfter then submenu()else writeSelected(patches,'DEFAULTS SAVED / VERIFIED')end
+    elseif a.key=='confirm'then local patches=copy(draft);local masks={};for i=0,2 do masks[i]=bit32.bxor(cfg[i].flags.value,draft[i].flags)end;defaultReview=false;stop(function()
+     if exitAfter then submenu()else writeSelected(patches,'DEFAULTS SAVED / VERIFIED',masks)end
     end)end
     return
    end

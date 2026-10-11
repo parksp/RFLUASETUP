@@ -8,6 +8,8 @@ return function(h)
  local values={cyclic=0,collective=0,geometry=0}
  local trimKeys={trimRoll='swash_trim_roll',trimPitch='swash_trim_pitch',trimCollective='swash_trim_collective'}
  local pending,dirty={},{}
+ local undoConfig,undoRates,lastConfig,lastRates={},{},{},{}
+ local finishExit,restore
  local ready,working,over,blocked,stopping,saving=false,false,false,false,false,false
  local leaving,saveRequested,edit,drag,modal=false,false,false,nil,nil
  local waitingForOn=false
@@ -27,33 +29,22 @@ return function(h)
  local function round(v)return v>=0 and math.floor(v+.5)or math.ceil(v-.5)end
  local function clone(t)local r={};for k,v in pairs(t)do r[k]=type(v)=='table'and clone(v)or v end;return r end
  local function current()return field=='angle'and angles[axis]or values[field]or 0 end
- local function step()return increments[incrementIndex]end
+ local function step()return field=='geometry'and math.max(.2,increments[incrementIndex])or increments[incrementIndex]end
  local function limits()if field=='angle'then return -18,18 elseif trimKeys[field]then return -100,100 elseif field=='geometry'then return -25,25 else return .1,200 end end
  local function begin(s)working=true;at=now();waitingCommand=nil;liveReplyDelayed=false;monitoring=false;state=s end
- local function q(cmd,payload,ok,err)
+ local function q(cmd,payload,ok,err,options)
   local token=epoch;at=now();waitingCommand=cmd
-  rf2.mspQueue:add({command=cmd,payload=payload,processReply=function(m,b)if token==epoch then at=now();waitingCommand=nil;liveReplyDelayed=false;if ok then ok(m,b)end end end,errorHandler=function()if token==epoch then(err or fault)('FC REQUEST FAILED / MSP '..cmd)end end})
+  local message={command=cmd,payload=payload,processReply=function(m,b)if token==epoch then at=now();waitingCommand=nil;liveReplyDelayed=false;if ok then ok(m,b)end end end,errorHandler=function()if token==epoch then(err or fault)('FC REQUEST FAILED / MSP '..cmd)end end};for k,v in pairs(options or{})do message[k]=v end;rf2.mspQueue:add(message)
  end
  local function readInputs(done,onError)
-  local fail=onError or fault
-  local function bulk()
-   q(170,nil,function(_,b)
-    if #b<30 or #b%6~=0 then fail('INPUT READ ERROR / MSP 170');return end
-    b.offset=1;local t={};for i=0,#b/6-1 do t[i]={rate=rf2.mspHelper.readS16(b),min=rf2.mspHelper.readS16(b),max=rf2.mspHelper.readS16(b)}end
-    inputReadMode='bulk';done(t)
-   end,fail)
-  end
-  if inputReadMode=='bulk'then bulk();return end
-  local ids={1,2,4};local t={}
-  local function one(n)
-   local i=ids[n];if not i then inputReadMode='single';done(t);return end
-   local function failed(s)if inputReadMode~='single'and n==1 then bulk()else fail(s)end end
-   q(174,{i},function(_,b)
-    if #b~=6 then failed('INPUT READ ERROR / MSP 174');return end
-    b.offset=1;t[i]={rate=rf2.mspHelper.readS16(b),min=rf2.mspHelper.readS16(b),max=rf2.mspHelper.readS16(b)};one(n+1)
-   end,failed)
-  end
-  one(1)
+  rf2.mixerInputsApi=rf2.mixerInputsApi or rf2.useApi('mspMixerInputs')
+  rf2.mixerInputsApi.read(done,onError or fault,q,{1,2,4})
+ end
+ local function syncValues(c,t)
+  values.cyclic=t and math.abs(t[1].rate)/10 or nil
+  values.collective=t and math.abs(t[4].rate)/10 or nil
+  values.geometry=c.swash_geo_correction.value/5
+  for k,f in pairs(trimKeys)do values[k]=c[f].value/10 end
  end
  local function read(done,optionalInputs)
   local token=epoch;at=now();waitingCommand=42
@@ -71,7 +62,7 @@ return function(h)
  end
  local function finished()
   working=false;state=next(dirty)and(over and'LIVE / NOT SAVED / ALL ON'or'LIVE / NOT SAVED / ALL OFF')or(over and'OVERRIDE ALL ON'or'OVERRIDE ALL OFF')
-  if leaving then stop(h.back)else flush()end
+  if leaving then finishExit()else flush()end
  end
  stop=function(done)
   if liveReplyDelayed and rf2.mspQueue.clear then rf2.mspQueue:clear()end
@@ -97,9 +88,10 @@ return function(h)
  end
  fault=function(s)
   if stopping then working=false;stopping=false;blocked=true;state='STOP FAILED / ALL OFF RETRY';return end
-  stop(function()blocked=true;state=s..' / OVERRIDE OFF';if leaving then h.back()end end)
+  stop(function()blocked=true;leaving=false;state=s..' / OVERRIDE OFF / CHECK UNSAVED VALUES'end)
  end
  function M.open()
+  if next(undoConfig)or next(undoRates)then state='UNSAVED VALUES / RTN TO RESTORE';return end
   inputReadMode=nil;inputsAvailable=false;axis=1;field='angle';focus=1;rollFront=false;ready=false;blocked=false;leaving=false;dirty={};pending={};values={cyclic=0,collective=0,geometry=0}
   stop(function()
    if not h.ready()then working=false;state='NO FC LINK / REOPEN';return end
@@ -125,17 +117,41 @@ return function(h)
  -- Live calibration uses loaded inputs, preserving signs/limits. Save reads back for verification.
  local function apply(key,v,done)
   if key=='geometry'or trimKeys[key]then
-   local token=epoch;local c=clone(cfg);local f=trimKeys[key]or'swash_geo_correction'
-   c[f].value=round(v*(trimKeys[key]and 10 or 5));at=now();waitingCommand=43
-   h.mixer().write(c,function()if token==epoch then cfg=c;liveReplyDelayed=false;done()end end,function()if token==epoch then liveError('FC REQUEST FAILED / MSP 43')end end)
+   local token=epoch;at=now();waitingCommand=42
+   h.mixer().read(function(_,fresh)
+    if token~=epoch then return end
+    -- Geometry/trim must never restore an earlier rotor/swash direction.
+    for _,k in ipairs({'main_rotor_dir','swash_type','tail_rotor_mode'})do
+     if fresh[k].value~=cfg[k].value then fault('ROTOR CONFIG CHANGED / REOPEN');return end
+    end
+    local f=trimKeys[key]or'swash_geo_correction'
+    if undoConfig[f]==nil then undoConfig[f]=fresh[f].value end
+    fresh[f].value=round(v*(trimKeys[key]and 10 or 5));lastConfig[f]=fresh[f].value;waitingCommand=43
+    h.mixer().write(fresh,function()if token==epoch then cfg=fresh;liveReplyDelayed=false;done()end end,function()if token==epoch then liveError('FC REQUEST FAILED / MSP 43')end end)
+   end,nil,nil,function()if token==epoch then liveError('CONFIG REFRESH FAILED / NO WRITE')end end)
   else
-    local t=clone(inputs or{});local ids=key=='cyclic'and{1,2}or{4}
-    for _,i in ipairs(ids)do if not t[i]then fault('INPUT NOT LOADED / REOPEN');return elseif t[i].rate==0 then fault('ZERO RATE / SET DIRECTION FIRST');return end end
+   -- Refresh signed rates/limits before every calibration write. A direction
+   -- change since opening the screen stops the operation instead of undoing it.
+   readInputs(function(t)
+    local ids=key=='cyclic'and{1,2}or{4}
+    for _,i in ipairs(ids)do
+     if not t[i]or not inputs[i]then fault('INPUT NOT LOADED / REOPEN');return end
+     if t[i].rate==0 or inputs[i].rate==0 then fault('ZERO RATE / SET DIRECTION FIRST');return end
+     if (t[i].rate<0)~=(inputs[i].rate<0)then fault('INPUT DIRECTION CHANGED / REOPEN');return end
+    end
     local function nextInput(n)
-     local i=ids[n];if not i then done();return end
-     t[i].rate=round(v*10)*(t[i].rate<0 and -1 or 1);writeInput(i,t[i],function()inputs[i]=clone(t[i]);nextInput(n+1)end)
+     local i=ids[n]
+     if not i then
+      readInputs(function(got)
+       for _,j in ipairs(ids)do local d,z=got[j],t[j];if not d or d.rate~=z.rate or d.min~=z.min or d.max~=z.max then fault('LIVE INPUT VERIFY FAILED');return end end
+       inputs=got;done()
+      end,liveError);return
+     end
+     if undoRates[i]==nil then undoRates[i]=t[i].rate end
+     t[i].rate=round(v*10)*(t[i].rate<0 and -1 or 1);lastRates[i]=t[i].rate;writeInput(i,t[i],function()inputs[i]=clone(t[i]);nextInput(n+1)end)
     end
     nextInput(1)
+   end,liveError)
   end
  end
  flush=function()
@@ -155,7 +171,7 @@ return function(h)
  local function change(v)
   if not ready or blocked or stopping or saving or saveRequested or not over then return end
   if (field=='cyclic'or field=='collective')and not inputsAvailable then state='INPUT READ FAILED / REOPEN TO RETRY';return end
-  local lo,hi=limits();v=math.max(lo,math.min(hi,round(v*10)/10))
+  local lo,hi=limits();local scale=field=='geometry'and 5 or 10;v=math.max(lo,math.min(hi,round(v*scale)/scale))
   if field=='angle'then angles[axis]=v;pending[axis]=v
   else values[field]=v;dirty[field]=v;pending[field]=v end
   state='UPDATE PENDING';flush()
@@ -184,20 +200,52 @@ return function(h)
        local good=trimKeys[k]and c[trimKeys[k]].value==round(v*10)or k=='geometry'and c.swash_geo_correction.value==round(v*5)or k=='collective'and math.abs(t[4].rate)==round(v*10)or k=='cyclic'and math.abs(t[1].rate)==round(v*10)and math.abs(t[2].rate)==round(v*10)
        if not good then fault('SAVE VERIFY FAILED');return end
       end
-      cfg=c;inputs=t;dirty={};working=false;saving=false;state=over and'SAVED / VERIFIED / ALL ON'or'SAVED / VERIFIED / ALL OFF'
-      if leaving then stop(h.back)end
+      cfg=c;inputs=t or{};inputsAvailable=t~=nil;syncValues(c,t);dirty={};undoConfig={};undoRates={};lastConfig={};lastRates={};working=false;saving=false;state=over and'SAVED / VERIFIED / ALL ON'or'SAVED / VERIFIED / ALL OFF'
+      if leaving then finishExit()end
      end,not expected.cyclic and not expected.collective)
     end)
    end
    nextField(1)
   end)
  end
+ restore=function(done)
+  if not next(undoConfig)and not next(undoRates)then done();return end
+  begin('RESTORING UNSAVED VALUES...');local token=epoch
+  local function failed(s)if token==epoch then working=false;blocked=true;leaving=false;state=s or'RESTORE FAILED / CHECK FC'end end
+  read(function(c,t)
+   if token~=epoch then return end
+   for f,v in pairs(undoConfig)do
+    if c[f].value~=lastConfig[f]and c[f].value~=v then failed('RESTORE CONFLICT / '..f);return end
+    c[f].value=v
+   end
+   for i,v in pairs(undoRates)do
+    if not t or not t[i]or(t[i].rate~=lastRates[i]and t[i].rate~=v)then failed('RESTORE CONFLICT / AXIS '..i);return end
+    t[i].rate=v
+   end
+   local function verify()
+    read(function(g,gi)
+     if token~=epoch then return end
+     for f,v in pairs(undoConfig)do if g[f].value~=v then failed('RESTORE VERIFY FAILED');return end end
+     for i,v in pairs(undoRates)do if not gi or not gi[i]or gi[i].rate~=v or gi[i].min~=t[i].min or gi[i].max~=t[i].max then failed('RESTORE VERIFY FAILED');return end end
+     cfg=g;inputs=gi or{};dirty={};undoConfig={};undoRates={};lastConfig={};lastRates={};working=false;blocked=false;done()
+    end,not next(undoRates))
+   end
+   local ids={};for i in pairs(undoRates)do ids[#ids+1]=i end
+   local function writeRate(n)local i=ids[n];if not i then verify();return end;local p={i};for _,k in ipairs({'rate','min','max'})do rf2.mspHelper.writeU16(p,t[i][k])end;q(171,p,function()writeRate(n+1)end,failed)end
+   if next(undoConfig)then h.mixer().write(c,function()if token==epoch then writeRate(1)end end,function()failed('RESTORE WRITE FAILED / MSP 43')end)else writeRate(1)end
+  end,not next(undoRates))
+ end
+ finishExit=function()stop(function()
+  if not next(undoConfig)and not next(undoRates)then leaving=false;h.back();return end
+  begin('CHECKING DISARM / RESTORE...');status(function()restore(function()leaving=false;h.back()end)end)
+ end)end
  function M.back()
   if modal=='entry'then leaving=true;stop(h.back);return end
   if modal then modal=nil;return end
   leaving=true;drag=nil;edit=false
   if saving or saveRequested then state='FINISH SAVE / THEN RETURN';return end
-  stop(h.back)
+  if working and not liveReplyDelayed then state='FINISH LIVE UPDATE / THEN RESTORE';return end
+  finishExit()
  end
  function M.commit(key,v)if key==field and type(v)=='number'then change(v)end end
  function M.activate(a)
@@ -395,7 +443,7 @@ return function(h)
    if rf2.mspQueue.clear then rf2.mspQueue:clear()end
    state='FC NO RESPONSE / MSP '..failedCommand..' / OFF UNCONFIRMED'
    -- A release retry is required; never claim the FC acknowledged OFF.
-   if leaving then leaving=false;h.back('FC NO RESPONSE / GEOMETRY RELEASE & SAVE UNCONFIRMED')end
+   if leaving then leaving=false;state='FC NO RESPONSE / RESTORE UNCONFIRMED / CHECK FC'end
    return
   end
   if over and not working and not blocked and not edit and not drag and not modal and not(h.editing and h.editing())and not next(pending)and rf2.mspQueue:isProcessed()and now()-lastStatus>=100 then

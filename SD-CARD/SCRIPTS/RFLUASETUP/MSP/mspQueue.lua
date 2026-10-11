@@ -50,6 +50,7 @@ function MspQueueController:processQueue()
     if not self.currentMessage then
         self.currentMessage = popFirstElement(self.messageQueue)
         self.retryCount = 0
+        if self.currentMessage.isolateReply then mspClearRxTxBufs() end
     end
 
     if self.currentMessage.postSendDelay and self.currentMessage.buf then
@@ -67,7 +68,7 @@ function MspQueueController:processQueue()
 
     local retryDelay = 0.8 + (self.currentMessage.retryDelay or 0)
     if not rf2.runningInSimulator then
-        if not self.lastTimeCommandSent or (self.lastTimeCommandSent + retryDelay < rf2.clock()) then
+        if not self.lastTimeCommandSent or ((not self.currentMessage.maxAttempts or self.retryCount < self.currentMessage.maxAttempts) and self.lastTimeCommandSent + retryDelay < rf2.clock()) then
             if self.currentMessage.payload then
                 --rf2.print("Sending  cmd "..self.currentMessage.command..": {" .. joinTableItems(self.currentMessage.payload, ", ") .. "}")
                 mspSendRequest(self.currentMessage.command, self.currentMessage.payload)
@@ -116,7 +117,7 @@ function MspQueueController:processQueue()
         if self.currentMessage.postSendDelay then return end
         self:handleReply()
     -- A delayed rejection belongs to its command, not to the request now in flight.
-    elseif (cmd == self.currentMessage.command and err and not self.currentMessage.ignoreErrors) or (self.maxRetries >= 0 and self.retryCount > self.maxRetries) then
+    elseif (cmd == self.currentMessage.command and err and not self.currentMessage.ignoreErrors) or (self.maxRetries >= 0 and self.retryCount > self.maxRetries) or (self.currentMessage.maxAttempts and self.retryCount >= self.currentMessage.maxAttempts and self.lastTimeCommandSent + (self.currentMessage.replyTimeout or 3) <= rf2.clock()) then
         --rf2.print("Error or max retries reached, aborting cmd "..self.currentMessage.command)
         if self.currentMessage.errorHandler then
             self.currentMessage:errorHandler()
@@ -130,7 +131,10 @@ end
 function MspQueueController:handleReply()
     --rf2.print("Length of buf: "..tostring(#self.currentMessage.buf))
     if self.currentMessage.processReply then
-        pcall(self.currentMessage.processReply, self.currentMessage, self.currentMessage.buf)
+        local ok, reason = pcall(self.currentMessage.processReply, self.currentMessage, self.currentMessage.buf)
+        if not ok and self.currentMessage.errorHandler then
+            pcall(self.currentMessage.errorHandler, self.currentMessage, reason)
+        end
     end
     self.currentMessage = nil
     self.lastTimeCommandSent = nil

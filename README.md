@@ -4,11 +4,14 @@
 
 RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식을 분석하여 EdgeTX 조종기용 Lua 인터페이스로 구현한 프로젝트입니다. 가능한 한 많은 Configurator 기능을 PC 없이 조종기에서 확인하고 설정할 수 있도록 만드는 것이 목표입니다.
 
-현재 버전은 **0.6.91 BETA — 개발 중인 미완성 버전**입니다. **Easy Setup은 현재 서보 센터 설정까지 구현한 중간 단계**이며, 전체 기체 설정을 완료하는 마법사가 아닙니다.
+현재 버전은 **0.7.29 BETA — 개발 중인 미완성 버전**입니다. **Easy Setup은 메인로터 Geometry와 전용 Tail Setup까지 구현한 중간 단계**이며, 전체 기체 설정을 완료하는 마법사가 아닙니다.
 
-[0.6.91 BETA 다운로드 / Download](https://github.com/parksp/RFLUASETUP/releases/tag/v0.6.91-beta) · [한글·영문 변경 안내 / Bilingual release notes](RELEASE-0.6.91-BILINGUAL.md)
+[0.7.29 BETA 다운로드 / Download](https://github.com/parksp/RFLUASETUP/releases/tag/v0.7.29-beta) · [한글·영문 변경 안내 / Bilingual release notes](RELEASE-0.7.29-BILINGUAL.md)
 
 ### Easy Setup 진행 상황
+
+- Main Rotor Geometry: 축별 오버라이드·캘리브레이션·스와쉬 트림. 저장하지 않고 RETURN하면 원래 값 복원.
+- Tail Setup: 서보/모터 테일, 기본값과 로터 설정, 한 번 눌러 ON/OFF, 수평 슬라이더. 미저장값은 RETURN → DISCARD에서 복원.
 
 - 스와쉬 서보 기본값: 1520/760 펄스, Rate/Speed, 개별 Reverse, Limits/Scale/Geo 편집 및 저장 전 경고·확인.
 - 서보 리버스·센터 펄스 트림: FRONT/REAR 선택, 기수 방향 표시, 실제 출력 펄스 확인, Center Apply 확인 후 저장.
@@ -34,7 +37,7 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 
 ### 이전 화면 / Earlier screens — 0.6.33 BETA
 
-아래 사진은 **이전 0.6.33 BETA**를 RadioMaster TX16S MK3에서 실행한 실제 화면입니다. 현재 0.6.91의 Easy Setup 화면과는 다를 수 있습니다.
+아래 사진은 **이전 0.6.33 BETA**를 RadioMaster TX16S MK3에서 실행한 실제 화면입니다. 현재 0.7.29의 Easy Setup 화면과는 다를 수 있습니다.
 
 | 메인 화면 / Main screen | 3D 헬리콥터 자세 / 3D Helicopter Attitude |
 |---|---|
@@ -64,7 +67,7 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 
 ## 검증 범위
 
-- 개발 중인 미완성 BETA이며 Easy Setup은 서보 센터 설정까지의 중간 단계입니다.
+- 개발 중인 미완성 BETA이며 Easy Setup은 Geometry·Tail Setup까지 구현한 중간 단계입니다.
 - 장기간 실제 운용이나 다양한 기체 조합의 검증은 아직 진행되지 않았습니다.
 - 최신 변경은 모의 FC의 읽기/쓰기, 확인 후 저장, 다중 선택 트림, 오류 처리와 화면 검사로 확인했습니다. 실기 검증은 별도로 필요합니다.
 - 현재 검증 대상은 **RadioMaster TX16S MK3의 현재 EdgeTX 환경**과 **NEXUS Gyro의 현재 Rotorflight 4.6.x 펌웨어** 조합입니다.
@@ -79,15 +82,15 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 3. 최종 경로가 `/SCRIPTS/RFLUASETUP/main.lua`인지 확인합니다.
 4. 기존 버전이 있다면 폴더 전체를 교체합니다. 서로 다른 버전의 파일을 섞지 마십시오.
 5. EdgeTX를 재시작하고 시스템 또는 TOOLS 페이지에서 RFLUASETUP을 실행합니다.
-6. 상단의 `FC LINK`와 하단의 `v0.6.91 BETA`를 확인합니다.
+6. 상단의 `FC LINK`와 하단의 `0.7.29 BETA`를 확인합니다.
 
-자세한 내용은 [한국어 설치 안내](설치방법.txt)와 [최신 한글·영문 변경 안내](RELEASE-0.6.91-BILINGUAL.md)를 참고하십시오. [0.6.33 한국어 사용자 매뉴얼](docs/RFLUASETUP-0.6.33-한국어-사용자-매뉴얼.docx)은 이전 버전 참고용입니다.
+자세한 내용은 [한국어 설치 안내](설치방법.txt)와 [최신 한글·영문 변경 안내](RELEASE-0.7.29-BILINGUAL.md)를 참고하십시오. [0.6.33 한국어 사용자 매뉴얼](docs/RFLUASETUP-0.6.33-한국어-사용자-매뉴얼.docx)은 이전 버전 참고용입니다.
 
 ## English
 
 RFLUASETUP is an EdgeTX transmitter Lua interface developed from the menus and configuration workflow of Rotorflight Configurator 2.3.0. The goal is to make as much of the Configurator as practical available directly from the transmitter.
 
-This is **0.6.91 BETA — unfinished, work in progress**. **Easy Setup is at an intermediate stage, implemented through servo center setup.** It is not a complete helicopter setup wizard and does not establish flight readiness.
+This is **0.7.29 BETA — unfinished, work in progress**. **Easy Setup includes Main Rotor Geometry and dedicated Tail Setup at an intermediate stage.** It is not a complete helicopter setup wizard and does not establish flight readiness.
 
 ### Easy Setup progress
 
@@ -113,7 +116,7 @@ The current test target is RadioMaster TX16S MK3 with its current EdgeTX environ
 
 Other transmitters, display sizes, FCs, receivers, telemetry protocols, and firmware versions remain unverified. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
 
-See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.6.91-BILINGUAL.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show the current release.
+See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.29-BILINGUAL.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
 
 ## Main Areas
 

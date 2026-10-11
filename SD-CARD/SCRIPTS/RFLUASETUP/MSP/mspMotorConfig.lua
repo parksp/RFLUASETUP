@@ -9,7 +9,7 @@ local function read(callback,param,data)
 end
 local function write(data)
  local r={};for i=1,29 do r[i]=data.raw[i]end
- put16(r,1,data.minThrottle);put16(r,3,data.maxThrottle);put16(r,5,data.minCommand);r[9]=data.useDshotTelemetry;r[10]=data.protocol;put16(r,11,data.rate);r[14]=data.poles[1];put16(r,22,data.mainRatio[1]);put16(r,24,data.mainRatio[2]);put16(r,26,data.tailRatio[1]);put16(r,28,data.tailRatio[2])
+ put16(r,1,data.minThrottle);put16(r,3,data.maxThrottle);put16(r,5,data.minCommand);r[8]=data.poles[1];r[9]=data.useDshotTelemetry;r[10]=data.protocol;put16(r,11,data.rate);r[13]=data.unsynced;for i=1,4 do r[13+i]=data.poles[i];r[17+i]=data.rpmLpf[i]end;put16(r,22,data.mainRatio[1]);put16(r,24,data.mainRatio[2]);put16(r,26,data.tailRatio[1]);put16(r,28,data.tailRatio[2])
  local payload={};for i=1,29 do if i~=7 then payload[#payload+1]=r[i]end end
  rf2.mspQueue:add({command=222,payload=payload})
 end
