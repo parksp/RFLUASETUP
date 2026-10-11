@@ -22,7 +22,7 @@ This is **0.7.29 BETA — unfinished, work in progress**. **Easy Setup includes 
 
 Current changes were checked with a simulated FC, Lua event tests, rendered screens and syntax checks. They are not fully validated on physical aircraft/transmitters. Disconnect the motor and remove blades for bench testing; check manufacturer servo specifications and compare settings with the PC Configurator.
 
-**TX16S MK2:** The user reports a brief run/operation check and that the tool appears to work. This is only a preliminary user observation, not full feature, safety or long-term validation.
+**TX16S MK2:** Brief checks on some TX16S MK2 units suggest that the tool starts and runs, but parts of the interface may be clipped on screen. This is a preliminary observation; full feature, safety and long-term validation remain incomplete.
 
 The current test target is RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware. Other hardware and firmware combinations are not guaranteed.
 ### Installation Requirements
@@ -85,7 +85,7 @@ RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식�
 
 이번 변경은 모의 FC, Lua 이벤트, 화면 렌더와 문법 검사로 확인했습니다. 실제 기체·조종기의 모든 기능을 검증한 것은 아닙니다. 모터 연결과 블레이드를 분리하고, 제조사 서보 사양 및 PC Configurator 값과 대조하여 시험하세요.
 
-**TX16S MK2:** 사용자가 잠깐 실행·동작을 확인했으며 적용 가능한 것으로 보인다고 보고했습니다. 짧은 확인에 한정되며 전체 기능·안전성·장기간 운용 검증은 아직 아닙니다.
+**TX16S MK2:** 일부 TX16S MK2 기기에서 잠깐 확인했을 때 실행과 구동은 가능한 것으로 보이나, 화면 일부가 잘려 표시될 수 있습니다. 짧은 확인에 한정되며 전체 기능·안전성·장기간 운용 검증은 아직 완료되지 않았습니다.
 ## 조종기 실제 화면 / Actual Radio Screens
 
 ### Easy Setup — 0.6.91 BETA
