@@ -24,18 +24,18 @@ Current changes were checked with a simulated FC, Lua event tests, rendered scre
 
 **TX16S MK2:** Brief checks on some TX16S MK2 units suggest that the tool starts and runs, but parts of the interface may be clipped on screen. This is a preliminary observation; full feature, safety and long-term validation remain incomplete.
 
-The current test target is RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware. Other hardware and firmware combinations are not guaranteed.
+Development is primarily based on NEXUS XR, using RadioMaster TX16S MK3 with the currently tested EdgeTX environment and Rotorflight 4.6.x firmware. The tool can also operate with other compatible FCs. Some checks have been carried out on FlyDragon and Matek gyro/FC units, but these are partial checks rather than full validation of every feature or model.
 ### Installation Requirements
 
 - RadioMaster TX16S MK3
 - The currently tested EdgeTX environment on that transmitter
-- NEXUS Gyro
+- NEXUS XR as the primary development and test platform
 - The currently tested Rotorflight 4.6.x firmware
 - Rotorflight Configurator 2.3.0 as the comparison reference
 - Working receiver telemetry and MSP communication
 - Installation path `/SCRIPTS/RFLUASETUP`
 
-Other transmitters, display sizes, FCs, receivers, telemetry protocols, and firmware versions remain unverified. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
+Validation across other transmitters, display sizes, FCs, receivers, telemetry protocols and firmware versions remains incomplete, including the partially checked FlyDragon and Matek units. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
 
 See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.29-BILINGUAL.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
 
@@ -119,14 +119,16 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 |---|---|
 | 조종기 | RadioMaster TX16S MK3 |
 | 조종기 운영체제 | 해당 조종기에서 현재 사용 중인 EdgeTX 환경 |
-| FC | NEXUS Gyro |
+| FC | NEXUS XR — 우선 개발·시험 기준 |
 | FC 펌웨어 | 현재 사용 중인 Rotorflight 4.6.x 계열 |
 | 비교 기준 | Rotorflight Configurator 2.3.0 |
 | 화면 | TX16S MK3의 800 × 480 컬러 터치 화면 기준 |
 | 통신 | 수신기 텔레메트리를 통한 MSP 통신이 정상적으로 구성된 모델 |
 | SD 카드 경로 | `/SCRIPTS/RFLUASETUP` |
 
-다른 EdgeTX 조종기, 화면 크기, FC, 수신기, 텔레메트리 방식과 펌웨어 버전은 아직 검증하지 않았습니다. 조건이 다르면 화면 배치, MSP 데이터 읽기, 실시간 갱신 또는 저장 기능이 정상적으로 동작하지 않을 수 있습니다.
+NEXUS XR을 우선 기준으로 개발했으며, 다른 호환 FC에서도 구동할 수 있습니다. FlyDragon 자이로/FC와 Matek 자이로/FC도 일부 확인했습니다. 다만 해당 기기의 모든 기능이나 전체 모델을 검증한 것은 아닙니다.
+
+다른 EdgeTX 조종기, 화면 크기, FC, 수신기, 텔레메트리 방식과 펌웨어 버전에 대한 전체 검증은 아직 완료되지 않았습니다. 조건이 다르면 화면 배치, MSP 데이터 읽기, 실시간 갱신 또는 저장 기능이 정상적으로 동작하지 않을 수 있습니다.
 
 설치 전에는 PC용 Rotorflight Configurator에서 FC 설정을 `dump` 또는 `diff`로 백업해야 합니다. 조종기 Lua를 사용할 때는 PC Configurator의 FC 연결을 종료하는 것을 권장합니다.
 
@@ -135,7 +137,7 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 - 개발 중인 미완성 BETA이며 Easy Setup은 Geometry·Tail Setup까지 구현한 중간 단계입니다.
 - 장기간 실제 운용이나 다양한 기체 조합의 검증은 아직 진행되지 않았습니다.
 - 최신 변경은 모의 FC의 읽기/쓰기, 확인 후 저장, 다중 선택 트림, 오류 처리와 화면 검사로 확인했습니다. 실기 검증은 별도로 필요합니다.
-- 현재 검증 대상은 **RadioMaster TX16S MK3의 현재 EdgeTX 환경**과 **NEXUS Gyro의 현재 Rotorflight 4.6.x 펌웨어** 조합입니다.
+- 우선 개발·시험 기준은 **RadioMaster TX16S MK3의 현재 EdgeTX 환경**과 **NEXUS XR의 현재 Rotorflight 4.6.x 펌웨어** 조합입니다. **FlyDragon·Matek 자이로/FC도 일부 확인**했으며 전체 검증은 미완료입니다.
 - 다른 조종기, 화면 해상도, FC 및 펌웨어에서의 동작은 보장하지 않습니다.
 
 실제 비행에 적용하기 전에 Rotorflight Configurator 2.3.0과 모든 값을 비교하고, 모터와 블레이드를 안전하게 분리한 상태에서 벤치 테스트를 진행하십시오. 사용과 설정 변경의 판단 및 책임은 사용자에게 있습니다.
