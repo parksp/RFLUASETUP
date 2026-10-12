@@ -1,4 +1,4 @@
-RFLUASETUP 0.7.29 BETA Installation
+RFLUASETUP 0.7.34 BETA Installation
 ==================================
 
 RFLUASETUP is an unfinished BETA tool developed from the menus and workflow of Rotorflight Configurator 2.3.0. It aims to make as much of the Configurator as practical available through a transmitter Lua interface.
@@ -7,7 +7,7 @@ Current scope
 - Best suited for checking settings and status at the flying field when a PC is unavailable.
 - Unfinished intermediate release: Easy Setup is implemented through Main Rotor Geometry and dedicated Tail Setup, not the complete helicopter setup workflow.
 - Current changes passed simulated FC, Lua event, rendered-screen and syntax checks; physical aircraft/transmitter validation is still required.
-- Read RELEASE-0.7.29-BILINGUAL.md for current features and limitations.
+- Read RELEASE-0.7.34.md for current features and limitations.
 - TX16S MK2: a user briefly checked operation and reports it appears to work. Full feature/safety validation remains incomplete.
 - Current test target: RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware.
 - Other radios, screen sizes, FCs, and firmware versions are not guaranteed.
@@ -19,7 +19,7 @@ Installation
 4. Verify /SCRIPTS/RFLUASETUP/main.lua.
 5. Replace the complete old RFLUASETUP folder. Do not mix release files.
 6. Restart EdgeTX and open RFLUASETUP from the system or TOOLS page.
-7. Confirm FC LINK and v0.7.29 BETA.
+7. Confirm FC LINK and v0.7.34 BETA.
 
 Disconnect the motor and remove blades before bench testing. Verify center pulse and rate against your servo manufacturer's specifications before connecting servos. Presets are not universal compatibility guarantees.
 

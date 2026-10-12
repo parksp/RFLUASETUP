@@ -1,0 +1,7 @@
+RFLUASETUP 0.7.34 BETA — English
+기존 스크립트 폴더를 백업한 뒤 ZIP의 SD-CARD/SCRIPTS/RFLUASETUP을 새로 복사하세요.
+Full Setup > Configuration > Model Name의 제목 또는 값을 터치하면 영문 자판이 열립니다.
+영문 대문자·숫자·공백·-·_ 입력, 최대 32자. OK는 FC RAM에 적용하며 SAVE & REBOOT로 영구 저장합니다.
+Model ID (0-99)는 FC의 숫자 식별자이므로 별도로 유지합니다.
+모든 화면은 영문이며 한글 기능은 포함하지 않습니다.
+모의 입력/FC 검사 통과. 실제 조종기/FC 확인은 필요합니다.

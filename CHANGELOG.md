@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.34 BETA
+
+- English-only interface based on the 0.7.29 baseline.
+- Configuration > Model Name: touch the label or value to open the ASCII keyboard (maximum 32 characters).
+- Model ID (0-99) remains a separate numeric field.
+- Name OK applies to FC RAM through MSP11; SAVE & REBOOT persists the configuration.
+- Prevent keyboard, port editor and serial confirmation touches from activating underlying configuration rows.
+- Model Name, Geometry, Tail and release Lua syntax regression checks passed. Physical transmitter/FC validation remains outstanding.
+
+
+
 ## 0.7.29 BETA
 
 - Add dedicated servo/motor Tail Setup and Main Rotor Geometry; see RELEASE-0.7.29-BILINGUAL.md for changes since the last published release.
