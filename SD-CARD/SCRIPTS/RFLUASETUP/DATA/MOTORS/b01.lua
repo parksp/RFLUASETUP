@@ -1,0 +1,28 @@
+-- Offline catalog. Pole count 0 means unverified; never apply.
+return {
+{"250MX 3600KV (HML25M01)",3600,6,"continuous current: 16 A / continuous power: 170 W / weight: 33.5 g / input cells: 2–3S","5ddf0285dabd9a34"},
+{"300MX Brushless Motor(3700KV/2216)",3700,6,"weight: 70g / dimensions: 2216 / maximum output power: Approx. 260w/400W(5sec)","58befa9065aed204"},
+{"400MX Brushless Motor(1100KV/3220)",1100,6,"weight: 176g / dimensions: 3220 / maximum output power: Approx. 1110W/1660W(2sec)","8499caade12eaaea"},
+{"450MX 1700KV (HML45M02)",1700,6,"continuous current: 30 A / continuous power: 650 W / weight: 83 g / input cells: 6S","45cff9a4453eba39"},
+{"450MX 3400KV (HML45M01)",3400,6,"continuous current: 46 A / continuous power: 500 W / weight: 83 g / input cells: 3–4S","4f84ea6e7ed0e172"},
+{"460MX Brushless Motor(1800KV/2222)",1800,6,"weight: 87g / dimensions: 2222 / maximum output power: Approx. 650w/970W(5sec)","5a72c4e737b796bc"},
+{"460MX Brushless Motor(3200KV/2222)",3200,6,"weight: 87g / dimensions: 2222 / maximum output power: Approx. 500w/730W(5sec)","c9ecf3a7c0a3f5f4"},
+{"470MX Brushless Motor(1800KV/2818)",1800,8,"weight: 120g / dimensions: 2818 / maximum output power: Approx. 890w/1300W(2sec)","5587e3c8218842a6"},
+{"500MX Brushless Motor(1600KV/3225)",1600,6,"weight: 197g (prox.) / dimensions: 3225 / maximum output power: 1600W/2300W(5sec)","891f06a0a349bdfc"},
+{"520MX Brushless Motor(1600KV/3527)",1600,6,"weight: 267g / dimensions: 3527 / maximum output power: 1900W/2750W(2sec)","a5d7332b9a7e1e8e"},
+{"600MX Brushless Motor(510KV/3536)",510,10,"weight: 340g (prox.) / dimensions: 3536 / maximum output power: 3300W/5500W(5sec)","9ee7e4a1ca32521a"},
+{"700MX 530KV (HML70M03)",530,0,"continuous current: 90 A / continuous power: 4000 W / weight: 405 g / input cells: 12S / specification table poles: 10 / english description poles: 12","10945935a0cbfd05"},
+{"700MX Brushless Motor(510KV/4232)",510,10,"weight: 405g (prox.) / dimensions: 4232 / maximum output power: 4000W/6600W(5sec)","eff0b15a84b7faee"},
+{"730MX Brushless Motor(850KV/4230)",850,8,"weight: 380g / dimensions: 4230 / maximum output power: 2550W/4330W(5sec)","0873bfabbb02b5c8"},
+{"730MX Brushless Motor(960KV/4230)",960,8,"weight: 380g / dimensions: 4230 / maximum output power: 2550W/4330W(5sec)","27d53e04ac4b6c91"},
+{"750MX 450KV (HML75M02)",450,0,"continuous current: 100 A / continuous power: 4400 W / weight: 452 g / input cells: 12S / specification table poles: 10 / english description poles: 12","5648c7cd3cc21dcd"},
+{"750MX Brushless Motor(480KV/4236)",480,10,"weight: 452g / dimensions: 4236 / maximum output power: 4400W/7260W(5sec)","10f76147a3a03d26"},
+{"750MX Brushless Motor(530KV/4236)",530,10,"weight: 452g / dimensions: 4236 / maximum output power: 4400W/7260W(5sec)","8eb47925d37ffcfd"},
+{"750MX Brushless Motor(930KV/4236)",930,8,"weight: 452g / dimensions: 4236 / maximum output power: 2660W/4400W(2sec)","76e8db4142549cd2"},
+{"800MX Brushless Motor(440KV/4530)",440,10,"weight: 508g / dimensions: Spindle 6x56.7x94.5mm / maximum output power: 4440W/8800W(2sec)","05eb441d1f26608f"},
+{"800MX Brushless Motor(520KV/4530)",520,10,"weight: 508g / dimensions: 4530 / maximum output power: 5100W/11000W(2sec)","1898016c0b2ca4b1"},
+{"800MX Brushless Motor(570KV/4530)",570,10,"weight: 525g / dimensions: 4530 / maximum output power: 5100W/10200W(2sec)","8f89677045a10d53"},
+{"800MX Brushless Motor(720KV/4530)",720,10,"weight: 515g / dimensions: 4530 / maximum output power: 2660W/4400W(2sec)","ee409e06d0ad72ab"},
+{"850MX Brushless Motor(490KV/4535)",490,10,"weight: 570g / dimensions: 4535 / maximum output power: 5100W/11000W(2sec)","8efe258e4e0663a7"},
+{"850MX Brushless Motor(540KV/4535)",540,10,"weight: 570g / dimensions: 4535 / maximum output power: 5330W/11000W(2sec)","972adff8be6ec2b5"}
+}

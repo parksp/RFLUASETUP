@@ -165,3 +165,8 @@
 - Includes the current Full Setup, Status, Setup, Configuration, Receiver, Failsafe, Power, Motors, Governor, Servos, Mixer, Gyro, Rates, Profiles, Modes, Adjustments, Beepers, Sensors and Blackbox work.
 
 This release remains an unfinished BETA build intended for controlled evaluation.
+
+
+## 0.7.119 BETA candidate (2026-10-25)
+
+Motor save isolation, full catalogue, Easy motor menu and governor RPM reference. Nine other save-path findings documented and unresolved. See RELEASE-0.7.119.md.

@@ -1,0 +1,162 @@
+{
+  "date_kst": "2026-10-25",
+  "scope": "First source/trace/fault-injection audit; not a complete hardware or all-firmware certification",
+  "baseline_versions": [
+    "0.7.117",
+    "0.7.118"
+  ],
+  "audit_candidate": "0.7.119 motor-only fix candidate; other menu code unchanged",
+  "full_setup_menu_scope": [
+    "Status",
+    "Setup",
+    "Configuration",
+    "Receiver",
+    "Failsafe",
+    "Power",
+    "Motors",
+    "Governor",
+    "Servos",
+    "Mixer",
+    "Gyro",
+    "Rates",
+    "Profiles",
+    "Modes",
+    "Adjustments",
+    "Beeper",
+    "Sensors",
+    "Blackbox"
+  ],
+  "easy_setup": "Shared functions and menu navigation regression; existing servo/mixer cleanup regression retained",
+  "source_sha256": {
+    "RFLUASETUP-0.7.119-MOTOR-SAVE-ISOLATION\\SD-CARD\\SCRIPTS\\RFLUASETUP\\main.lua": "ddaf25e65d7770046c23b0d626ea83e8f0b8ba94f4cad1cf73b00b4e359682a9",
+    "RFLUASETUP-0.7.119-MOTOR-SAVE-ISOLATION\\SD-CARD\\SCRIPTS\\RFLUASETUP\\PAGESX\\advanced.lua": "74317c6077e984b8122ee672a2b99f6271f10c7f646e5d7a955fe0d0ba7946fe"
+  },
+  "probes": [
+    {
+      "id": "F01",
+      "confirmed": true,
+      "detail": "Gyro feature toggle sent full stale mask=536870912.0; serial RX and telemetry bits absent"
+    },
+    {
+      "id": "F02",
+      "confirmed": true,
+      "detail": "Configuration feature toggle sent full stale mask=268435456.0; serial RX and telemetry bits absent"
+    },
+    {
+      "id": "F03",
+      "confirmed": true,
+      "detail": "Receiver telemetry enable from stale mask produces protocol index=1 (NONE) despite provider=9"
+    },
+    {
+      "id": "F04",
+      "confirmed": true,
+      "detail": "All seven receiver reads failed; displayed state=CONNECTED / READY"
+    },
+    {
+      "id": "F05",
+      "confirmed": true,
+      "detail": "Failsafe failed-read pulse edit resent cached RX provider=2; active provider could be CRSF=9"
+    },
+    {
+      "id": "F06",
+      "confirmed": true,
+      "detail": "All power reads failed; state=CONNECTED / READY; battery writer still emitted 27 bytes from cached/default data"
+    },
+    {
+      "id": "F07",
+      "confirmed": true,
+      "detail": "Feature/filter/three notch-axis reads failed; gyro state=CONNECTED / EXPERT"
+    },
+    {
+      "id": "F08",
+      "confirmed": true,
+      "detail": "Beeper read failed; changing tone still sends default beep mask=0 and digital mask=0"
+    },
+    {
+      "id": "F09",
+      "confirmed": true,
+      "detail": "Both Blackbox reads failed; state=CONNECTED; denominator edit resends logging device=NONE"
+    },
+    {
+      "id": "P01",
+      "confirmed": true,
+      "detail": "PID and profile headspeed edits call only their own API; SAVE sends EEPROM only, not other profile groups"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F01",
+      "priority": "P1",
+      "menu": "GYRO",
+      "trigger": "기능 토글 시 공통 FEATURE 전체를 오래된 gyFeature로 전송",
+      "impact": "수신기 SERIAL RX(bit3)와 TELEMETRY(bit10)가 같이 꺼질 수 있음",
+      "source": "main.lua:460,463"
+    },
+    {
+      "id": "F02",
+      "priority": "P1",
+      "menu": "CONFIGURATION",
+      "trigger": "Feature 토글이 cfgFeature 전체를 재전송",
+      "impact": "변경한 Feature 이외 수신기/텔레메트리 등 공통 기능을 덮어쓸 수 있음",
+      "source": "main.lua:1112,1138"
+    },
+    {
+      "id": "F03",
+      "priority": "P1",
+      "menu": "RECEIVER",
+      "trigger": "텔레메트리 ON/OFF도 rxFeature 전체를 전송",
+      "impact": "stale mask에서 텔레메트리 ON 시 provider=9라도 프로토콜 표시 NONE 재현",
+      "source": "main.lua:977,996,1004"
+    },
+    {
+      "id": "F04",
+      "priority": "P2",
+      "menu": "RECEIVER",
+      "trigger": "읽기 7개가 모두 실패해도 완료 콜백이 CONNECTED / READY 표시",
+      "impact": "캐시/초기값과 실제 읽은 값을 구분하지 않고 편집할 수 있음",
+      "source": "main.lua:986-994"
+    },
+    {
+      "id": "F05",
+      "priority": "P1",
+      "menu": "FAILSAFE",
+      "trigger": "RX_CONFIG 읽기 실패 뒤 pulseMin만 수정해도 RX_CONFIG 전체 전송",
+      "impact": "캐시된 provider=2가 함께 전송됨; 실제 CRSF=9를 덮어쓸 수 있음",
+      "source": "main.lua:1040-1045"
+    },
+    {
+      "id": "F06",
+      "priority": "P2",
+      "menu": "POWER",
+      "trigger": "읽기 실패 완료도 CONNECTED / READY; battery writer 미차단",
+      "impact": "캐시/초기 배터리·프로필 용량을 27바이트 설정으로 쓸 수 있음",
+      "source": "main.lua:1062-1069"
+    },
+    {
+      "id": "F07",
+      "priority": "P2",
+      "menu": "GYRO",
+      "trigger": "Feature/filter/custom axis 읽기가 모두 실패해도 CONNECTED / EXPERT 표시",
+      "impact": "읽지 못한 기능/필터를 이전 값으로 편집할 수 있음",
+      "source": "main.lua:457-460"
+    },
+    {
+      "id": "F08",
+      "priority": "P2",
+      "menu": "BEEPER",
+      "trigger": "읽기 실패 후 tone 수정 허용",
+      "impact": "tone 수정이 기본 beep mask=0와 digital mask=0도 전송",
+      "source": "PAGESX/advanced.lua:32,33,41,113"
+    },
+    {
+      "id": "F09",
+      "priority": "P2",
+      "menu": "BLACKBOX",
+      "trigger": "두 읽기 모두 실패해도 CONNECTED; 설정 편집 허용",
+      "impact": "분모만 바꿔도 기본 Logging Device NONE 등 전체 설정을 전송",
+      "source": "PAGESX/advanced.lua:33,41,113"
+    }
+  ],
+  "no_other_menu_fixes_applied": true,
+  "hardware_tested": false
+}

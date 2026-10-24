@@ -1,5 +1,5 @@
 -- RF SETUP HELI 0.2.0 - reviewed UI shell for TX16S / EdgeTX
-local VERSION="0.7.34 BETA"
+local VERSION="0.7.119 BETA"
 local page="home"
 local selected=1
 local scroll=1
@@ -558,9 +558,10 @@ local function commitNumber()
  elseif numEdit.kind=='mixconfig'then rfQueueMixerRaw('mixconfig',numEdit.index,v);dirtyMixer()
  elseif numEdit.kind=='mixinput'then rfQueueMixerRaw('mixinput',numEdit.index,v);dirtyMixer(false)
  elseif numEdit.kind=='mixoverride'then sendMixerOverride(numEdit.index,v,true)
+ elseif numEdit.kind=='gearSetup'then if rfGearSetup then rfGearSetup.set(numEdit.index,v)end
  elseif numEdit.kind=='motorGear'then rfGearZ[numEdit.index]=v;rfGearCalculate();applyMotorLive()
  elseif numEdit.kind=='motorRatio'then if numEdit.index==2 then rfMainN=v elseif numEdit.index==3 then rfMainD=v elseif numEdit.index==4 then rfTailN=v else rfTailD=v end;motorDirty=true;rfGearDisplay();applyMotorLive()
- elseif numEdit.kind=='motorPole'then rfMotorPages[3][6][2]=tostring(v);motorConfig.poles[1]=v;motorDirty=true;rfGearDisplay();applyMotorLive()
+ elseif numEdit.kind=='motorPole'then rfMotorModelLabel=nil; rfMotorPages[3][6][2]=tostring(v);motorConfig.poles[1]=v;motorDirty=true;rfGearDisplay();applyMotorLive()
  elseif numEdit.kind=='motorField'then motorConfig[numEdit.index]=v;motorDirty=true;rfMotorRefreshRows();applyMotorLive()
  elseif numEdit.kind=='escField'then escSensorConfig[numEdit.index].value=v;motorDirty=true;rfRefreshEscRows();rfApplyEscLive()
  elseif numEdit.kind=='easy'then easyCommitNumber(numEdit.index,v)
@@ -648,6 +649,7 @@ rfGearModels={
 }
 rfGearModel=10;rfGearZ={21,56,18,68,34,26,0};rfRpmSensor=true;rfMainN=378;rfMainD=3808;rfTailN=468;rfTailD=2312
 motorConfig=nil;motorFeature=nil;escSensorConfig=nil;motorState='NOT READ';motorDirty=false;rfMotorLive=false
+rfMotorRpmDirty=false;rfMotorEscDirty=false;rfMotorSaving=false
 rfMotorOverrideOn=false;rfMotorOverridePct=0;rfMotorGaugeEdit=false;rfMotorDrag=false;rfMotorLastX=nil;rfMotorKeepAliveAt=-1000
 rfMotorTelemetry={};rfMotorTelemetryAt=-1000
 function rfRatioText(n,d)
@@ -655,12 +657,13 @@ function rfRatioText(n,d)
 end
 function applyMotorLive()
  if not motorConfig or not motorApi then return end;motorConfig.mainRatio={rfMainN,rfMainD};motorConfig.tailRatio={rfTailN,rfTailD};motorApi.write(motorConfig)
- if motorFeature then local mask=2^30;local on=bit32.band(motorFeature.bitfield,mask)~=0;if rfRpmSensor and not on then motorFeature.bitfield=motorFeature.bitfield+mask elseif not rfRpmSensor and on then motorFeature.bitfield=motorFeature.bitfield-mask end;local q={};rf2.mspHelper.writeU32(q,motorFeature.bitfield);rf2.mspQueue:add({command=37,payload=q})end
+ -- Gear/pole edits must never resend the shared receiver/telemetry feature mask.
  motorState='LIVE ON FC / NOT SAVED'
 end
 function rfGearDisplay()
- local m=rfGearModels[rfGearModel];local t=m[2];local p={{'RPM Sensor',rfRpmSensor and'ON'or'OFF'},{'Main Rotor Gear Ratio A',tostring(rfMainN)},{'Main Rotor Gear Ratio B',tostring(rfMainD)},{'Tail Rotor Gear Ratio A',tostring(rfTailN)},{'Tail Rotor Gear Ratio B',tostring(rfTailD)},{'Main Motor Pole Count',tostring(motorConfig and motorConfig.poles[1]or 10)},{'Aircraft Reference',m[1]}}
+ local m=rfGearModels[rfGearModel];local t=m[2];local p={{'RPM Sensor',rfRpmSensor and'ON'or'OFF'},{'Main Rotor Gear Ratio A',tostring(rfMainN)},{'Main Rotor Gear Ratio B',tostring(rfMainD)},{'Tail Rotor Gear Ratio A',tostring(rfTailN)},{'Tail Rotor Gear Ratio B',tostring(rfTailD)},{'Main Motor Pole Count',tostring(motorConfig and motorConfig.poles[1]or 10)},{'Motor Model',rfMotorModelLabel or'SELECT MODEL >'},{'Aircraft / Gear / RPM',rfAircraftLabel or'SELECT MODEL >'}}
  if t~=0 then p[#p+1]={'Motor Pinion (T)',tostring(rfGearZ[1])};p[#p+1]={'Main Gear (T)',tostring(rfGearZ[2])};p[#p+1]={'Tail Pulley (T)',tostring(t==3 and rfGearZ[7]or rfGearZ[6])};p[#p+1]={'Calculated Main Ratio',rfRatioText(rfMainN,rfMainD)};p[#p+1]={'Calculated Tail Ratio',rfRatioText(rfTailN,rfTailD)};p[#p+1]={'Restore Aircraft Default','PRESS ENTER'}end
+ p[#p+1]={'Graphical Gear Calculator','OPEN >'}
  rfMotorPages[3]=p;if motorConfig then motorConfig.mainRatio={rfMainN,rfMainD};motorConfig.tailRatio={rfTailN,rfTailD};motorConfig.poles[1]=tonumber(p[6][2])or 10 end
 end
 function rfGearCalculate()
@@ -679,20 +682,43 @@ function rfRefreshEscRows()
  if motorConfig and motorConfig.protocol==9 then p={};if c.voltage_correction then p={{'Voltage Correction [%]',tostring(c.voltage_correction.value or 0),'voltage_correction'},{'Current Correction [%]',tostring(c.current_correction.value or 0),'current_correction'},{'Consumption Correction [%]',tostring(c.consumption_correction.value or 0),'consumption_correction'}}end end
  rfMotorPages[2]=p
 end
-function rfApplyEscLive()if escSensorConfig and escSensorApi then escSensorApi.write(escSensorConfig);motorState='ESC TELEMETRY LIVE / NOT SAVED'end end
+function rfApplyEscLive()if escSensorConfig and escSensorApi then rfMotorEscDirty=true;escSensorApi.write(escSensorConfig);motorState='ESC TELEMETRY LIVE / NOT SAVED'end end
 function rfMotorRefreshRows()
  if not motorConfig then return end;local names={[0]='PWM','ONESHOT125','ONESHOT42','MULTISHOT','BRUSHED','DSHOT150','DSHOT300','DSHOT600','PROSHOT','CASTLE','DISABLED'};local proto=motorConfig.protocol;local p={{'Throttle Protocol (ESC)',names[proto]or tostring(proto),'protocol'}};local dshot=proto>=5 and proto<=8;local enabled=proto~=10;if enabled and not dshot then p[#p+1]={'Update Frequency [Hz]',tostring(motorConfig.rate),'rate'};if proto~=0 and proto~=9 then p[#p+1]={'Unsynced PWM',motorConfig.unsynced>0 and'ON'or'OFF','unsynced'}end;p[#p+1]={'Live Update',rfMotorLive and'ON'or'OFF','live'};p[#p+1]={'Motor Off [us]',tostring(motorConfig.minCommand),'minCommand'};p[#p+1]={'Low Throttle [us]',tostring(motorConfig.minThrottle),'minThrottle'};p[#p+1]={'High Throttle [us]',tostring(motorConfig.maxThrottle),'maxThrottle'}end;rfMotorPages[1]=p;rfRefreshEscRows();rfGearDisplay()
 end
 function requestMotor()
+ if rfMotorSaving then motorState='SAVE IN PROGRESS';return end
+ rfMotorRpmDirty=false;rfMotorEscDirty=false;motorFeature=nil
+ rfAircraftLabel=nil
+ rfMotorModelLabel=nil
  if not rfReady or not motorApi then return end;motorState='READING FC...';local gotM,gotF=false,false;local function done()if gotM and gotF then motorState=motorConfig and'CONNECTED / READY'or'READ ERROR'end end
  motorApi.read(function(_,d)motorConfig=d;gotM=true;if d then if(d.motorCount or 1)>1 then for i=10,14 do rfMotorPages[5][i]={'Motor #2 Monitor','LIVE'}end else for i=#rfMotorPages[5],10,-1 do rfMotorPages[5][i]=nil end end;rfGearModel=#rfGearModels;rfMainN,rfMainD=d.mainRatio[1],d.mainRatio[2];rfTailN,rfTailD=d.tailRatio[1],d.tailRatio[2];rfMotorRefreshRows()end;done()end,nil,motorConfig)
  featureApi.getFeatureConfig(function(_,d)motorFeature=d;rfRpmSensor=d and bit32.band(d.bitfield,2^30)~=0or false;gotF=true;rfGearDisplay();done()end,nil);escSensorConfig=escSensorApi.getDefaults();escSensorApi.read(function(_,d)escSensorConfig=d;rfRefreshEscRows()end,nil,escSensorConfig)
 end
+function rfSaveMotorRpmFeature(done)
+ if not rfMotorRpmDirty then done(true);return end
+ local wanted=rfRpmSensor
+ local function fail(message)motorState=message;done(false)end
+ rf2.mspQueue:add({command=36,processReply=function(_,buf)
+  if not buf or #buf<4 then fail('FEATURE READ FAILED / NOT SAVED');return end
+  local bits=rf2.mspHelper.readU32(buf);local mask=2^30;local on=bit32.band(bits,mask)~=0
+  if wanted and not on then bits=bits+mask elseif not wanted and on then bits=bits-mask end
+  local q={};rf2.mspHelper.writeU32(q,bits)
+  rf2.mspQueue:add({command=37,payload=q,processReply=function()
+   motorFeature={bitfield=bits};rfMotorRpmDirty=rfRpmSensor~=wanted
+   if rfMotorRpmDirty then fail('RPM CHANGE PENDING / SAVE AGAIN')else done(true)end
+  end,errorHandler=function()fail('RPM FEATURE WRITE FAILED')end})
+ end,errorHandler=function()fail('FEATURE READ FAILED / NOT SAVED')end})
+end
 function saveMotor()
- if not motorConfig then motorState='READ FC FIRST';return end;motorState='SAVING...';motorApi.write(motorConfig)
- if motorFeature then local mask=2^30;local on=bit32.band(motorFeature.bitfield,2^30)~=0;if rfRpmSensor and not on then motorFeature.bitfield=motorFeature.bitfield+mask elseif not rfRpmSensor and on then motorFeature.bitfield=motorFeature.bitfield-mask end;local q={};rf2.mspHelper.writeU32(q,motorFeature.bitfield);rf2.mspQueue:add({command=37,payload=q})end
- if escSensorConfig then escSensorApi.write(escSensorConfig)end
- rf2.mspQueue:add({command=250,processReply=function()motorDirty=false;motorState='SAVED TO FC EEPROM'end,errorHandler=function()motorState='APPLIED / SAVE REQUIRES DISARM'end})
+ if not motorConfig then motorState='READ FC FIRST';return end
+ if rfMotorSaving then return end;rfMotorSaving=true;motorState='SAVING...'
+ rfSaveMotorRpmFeature(function(ok)
+  if not ok then rfMotorSaving=false;return end
+  motorApi.write(motorConfig)
+  if rfMotorEscDirty and escSensorConfig then escSensorApi.write(escSensorConfig)end
+  rf2.mspQueue:add({command=250,processReply=function()rfMotorSaving=false;rfMotorEscDirty=false;motorDirty=false;motorState='SAVED TO FC EEPROM'end,errorHandler=function()rfMotorSaving=false;motorState='APPLIED / SAVE REQUIRES DISARM'end})
+ end)
 end
 function rfRequestMotorTelemetry()
  if not rfReady then return end;rf2.mspQueue:add({command=139,processReply=function(_,buf)local count=rf2.mspHelper.readU8(buf);local d={};for i=1,count do d[i]={rpm=rf2.mspHelper.readU32(buf),error=rf2.mspHelper.readU16(buf),voltage=rf2.mspHelper.readU16(buf),current=rf2.mspHelper.readU16(buf),consumption=rf2.mspHelper.readU16(buf),temp1=rf2.mspHelper.readU16(buf),temp2=rf2.mspHelper.readU16(buf)}end;rfMotorTelemetry=d;local m=d[1]or{};local motorRpm=m.rpm or 0;local main=rfMainD>0 and math.floor(motorRpm*rfMainN/rfMainD+.5)or 0;local tail;if count>1 then tail=(d[2]and d[2].rpm)or 0 else tail=rfTailD>0 and math.floor(motorRpm*rfTailN/rfTailD+.5)or 0 end;rfMotorPages[4][1][2]=tostring(main)..' RPM';rfMotorPages[4][2][2]=tostring(tail)..' RPM';rfMotorPages[6][1][2]=tostring(motorRpm)..' RPM';rfMotorPages[6][2][2]=string.format('%.2f V',(m.voltage or 0)/1000);rfMotorPages[6][3][2]=string.format('%.2f A',(m.current or 0)/1000);rfMotorPages[6][4][2]=string.format('%.1f C',(m.temp1 or 0)/10);rfMotorPages[6][5][2]=string.format('%.1f C',(m.temp2 or 0)/10)end})
@@ -733,25 +759,43 @@ function rfMotorActivateRow(i)
  if rfMotorTab==1 then if not motorConfig then motorState='READ FC FIRST';return end;local r=rfMotorPages[1][i];local k=r and r[3];if k=='protocol'then local names={'PWM','ONESHOT125','ONESHOT42','MULTISHOT','BRUSHED','DSHOT150','DSHOT300','DSHOT600','PROSHOT','CASTLE','DISABLED'};local q={};for n,v in ipairs(names)do q[n]={v,n-1}end;openChoice('THROTTLE PROTOCOL',q,motorConfig.protocol+1,function(v)motorConfig.protocol=v;if v==9 and escSensorConfig then escSensorConfig.protocol.value=0 end;motorDirty=true;rfMotorRefreshRows();applyMotorLive();rfApplyEscLive()end)elseif k=='live'then rfMotorLive=not rfMotorLive;rfMotorRefreshRows()elseif k=='unsynced'then motorConfig.unsynced=motorConfig.unsynced>0 and 0 or 1;motorDirty=true;rfMotorRefreshRows();applyMotorLive()elseif k then beginNumber('motorField',k,motorConfig[k],k=='rate'and 50 or 50,k=='rate'and 8000 or 2250)end;return end
  if rfMotorTab==2 then if not escSensorConfig then motorState='READ FC FIRST';return end;local r=rfMotorPages[2][i];local k=r and r[3];if k=='protocol'then local q={};for n,v in ipairs(rfEscProtocols)do q[n]={v,n-1}end;openChoice('ESC TELEMETRY PROTOCOL',q,(escSensorConfig.protocol.value or 0)+1,function(v)escSensorConfig.protocol.value=v;motorDirty=true;rfRefreshEscRows();rfApplyEscLive()end)elseif k=='half_duplex'or k=='pin_swap'then escSensorConfig[k].value=escSensorConfig[k].value>0 and 0 or 1;motorDirty=true;rfRefreshEscRows();rfApplyEscLive()elseif k then beginNumber('escField',k,escSensorConfig[k].value,-100,125)end;return end
  if rfMotorTab==5 then if i==1 then rfSendMotorOverride(rfMotorOverridePct,not rfMotorOverrideOn)elseif i==2 then rfMotorLive=not rfMotorLive;rfMotorRefreshRows();rfMotorPages[5][2][2]=rfMotorLive and'ON'or'OFF' elseif i==3 then if rfMotorOverrideOn then rfMotorGaugeEdit=not rfMotorGaugeEdit else motorState='TURN OVERRIDE ON FIRST'end end;return end
- if rfMotorTab~=3 then return end;local t=rfGearModels[rfGearModel][2];if i==1 then openChoice('RPM SENSOR',{{'OFF',false},{'ON',true}},rfRpmSensor and 2 or 1,function(v)rfRpmSensor=v;motorDirty=true;rfGearDisplay();applyMotorLive()end)elseif i>=2 and i<=5 then beginNumber('motorRatio',i,tonumber(rfMotorPages[3][i][2]),1,65535)elseif i==6 then beginNumber('motorPole',6,tonumber(rfMotorPages[3][6][2])or 10,2,100)elseif i==7 then rfGearChoice()elseif t~=0 and i==8 then beginNumber('motorGear',1,rfGearZ[1],1,1000)elseif t~=0 and i==9 then beginNumber('motorGear',2,rfGearZ[2],1,1000)elseif t~=0 and i==10 then beginNumber('motorGear',t==3 and 7 or 6,rfGearZ[t==3 and 7 or 6],1,1000)elseif t~=0 and i==13 then rfGearLoad(rfGearModel)end
+ if rfMotorTab~=3 then return end;if rfMotorPages[3][i]and rfMotorPages[3][i][1]=='Graphical Gear Calculator'then rfGearOpenManual();return end;local t=rfGearModels[rfGearModel][2];if i==1 then openChoice('RPM SENSOR',{{'OFF',false},{'ON',true}},rfRpmSensor and 2 or 1,function(v)if not motorFeature then motorState='READ FEATURES FIRST';return end;rfRpmSensor=v;rfMotorRpmDirty=true;motorDirty=true;rfGearDisplay();applyMotorLive()end)elseif i>=2 and i<=5 then beginNumber('motorRatio',i,tonumber(rfMotorPages[3][i][2]),1,65535)elseif i==6 then beginNumber('motorPole',6,tonumber(rfMotorPages[3][6][2])or 10,2,100)elseif i==7 then rfMotorOpenCatalog()elseif i==8 then rfGearOpenCatalog()elseif t~=0 and i==9 then beginNumber('motorGear',1,rfGearZ[1],1,1000)elseif t~=0 and i==10 then beginNumber('motorGear',2,rfGearZ[2],1,1000)elseif t~=0 and i==11 then beginNumber('motorGear',t==3 and 7 or 6,rfGearZ[t==3 and 7 or 6],1,1000)elseif t~=0 and i==14 then rfGearLoad(rfGearModel)end
 end
 rfGearDisplay()
 function rfMotorTopButton(i,x,y,w)
  local active=rfMotorTab==i;button('motab'..i,rfMotorTabs[i],x,y,w,34,active,{kind='motorTopTab',value=i},i==5 and'orange'or'cyan')
 end
 function rfDrawRpmGear()
- local p=rfMotorPages[3];local detail=rfGearModels[rfGearModel][2]~=0;local row=rfMotorFocus-6;local showDetail=detail and(row>7 or rfMotorScroll>1);local y=184
+ local p=rfMotorPages[3];local detail=rfGearModels[rfGearModel][2]~=0;local row=rfMotorFocus-6;local showDetail=detail and row>8 and row<#p;local y=184
+ if not showDetail then rfMotorScroll=1 end
  if not showDetail then
-  fill(20,y,710,42,'panel2');box(20,y,710,42,row==1 and'orange'or'line');txt(34,y+11,'RPM Sensor','text');rfDrawOnOff('rpmSensor',rfRpmSensor,y+3,'rpmSensorSet');y=y+46
-  fill(20,y,710,36,'panel2');box(20,y,710,36,(row==2 or row==3)and'orange'or'line');txt(34,y+9,'Main Rotor Gear Ratio','text');txt(300,y+9,rfRatioText(rfMainN,rfMainD),'cyan');button('morow2',p[2][2],455,y+2,110,32,row==2,{kind='motorRow',value=2},'cyan');txt(574,y+9,':','muted');button('morow3',p[3][2],595,y+2,125,32,row==3,{kind='motorRow',value=3},'cyan');y=y+40
-  fill(20,y,710,36,'panel2');box(20,y,710,36,(row==4 or row==5)and'orange'or'line');txt(34,y+9,'Tail Rotor Gear Ratio','text');txt(300,y+9,rfRatioText(rfTailN,rfTailD),'cyan');button('morow4',p[4][2],455,y+2,110,32,row==4,{kind='motorRow',value=4},'cyan');txt(574,y+9,':','muted');button('morow5',p[5][2],595,y+2,125,32,row==5,{kind='motorRow',value=5},'cyan');y=y+40
-  fill(20,y,710,36,'panel2');box(20,y,710,36,row==6 and'orange'or'line');txt(34,y+9,'Main Motor Pole Count','text');button('morow6',p[6][2],570,y+2,150,32,row==6,{kind='motorRow',value=6},'cyan');y=y+40
-  fill(20,y,710,36,'panel2');box(20,y,710,36,row==7 and'orange'or'line');txt(34,y+9,'Aircraft Reference','text');button('morow7',p[7][2],360,y+2,360,32,row==7,{kind='motorRow',value=7},'cyan')
- else local first=math.max(8,math.min(#p-3,row));local last=math.min(#p,first+3);for i=first,last do local r=p[i];fill(20,y,710,42,'panel2');box(20,y,710,42,row==i and'orange'or'line');txt(34,y+11,r[1],'text');button('morow'..i,r[2],500,y+3,220,36,row==i,{kind='motorRow',value=i},'cyan');y=y+47 end end
+  fill(20,y,710,36,'panel2');box(20,y,710,36,row==1 and'orange'or'line');txt(34,y+9,'RPM Sensor','text');rfDrawOnOff('rpmSensor',rfRpmSensor,y,'rpmSensorSet');y=y+38
+  fill(20,y,710,34,'panel2');txt(34,y+8,'Main Rotor Gear Ratio','text');txt(300,y+8,rfRatioText(rfMainN,rfMainD),'cyan');button('morow2',p[2][2],455,y,110,32,row==2,{kind='motorRow',value=2},'cyan');txt(574,y+8,':','muted');button('morow3',p[3][2],595,y,125,32,row==3,{kind='motorRow',value=3},'cyan');y=y+36
+  fill(20,y,710,34,'panel2');txt(34,y+8,'Tail Rotor Gear Ratio','text');txt(300,y+8,rfRatioText(rfTailN,rfTailD),'cyan');button('morow4',p[4][2],455,y,110,32,row==4,{kind='motorRow',value=4},'cyan');txt(574,y+8,':','muted');button('morow5',p[5][2],595,y,125,32,row==5,{kind='motorRow',value=5},'cyan');y=y+36
+  fill(20,y,710,34,'panel2');txt(34,y+8,'Main Motor Pole Count','text');button('morow6',p[6][2],570,y,150,32,row==6,{kind='motorRow',value=6},'cyan');y=y+36
+  fill(20,y,710,34,'panel2');txt(34,y+8,'Motor Model','text');button('motorCatalogOpen',rfMotorModelLabel and string.sub(rfMotorModelLabel,1,34)or'MANUFACTURER > MODEL > POLES',360,y,360,32,row==7,{kind='motorRow',value=7},'cyan');y=y+36
+  fill(20,y,710,34,'panel2');txt(34,y+8,'Aircraft','text');button('gearDrawingOpen','DRAW GEARS',170,y,174,32,row==#p,{kind='motorRow',value=#p},'cyan');button('morow8',string.sub(p[8][2],1,33),360,y,360,32,row==8,{kind='motorRow',value=8},'cyan')
+ else local first=math.max(9,math.min(#p-3,row));local last=math.min(#p,first+3);for i=first,last do local r=p[i];fill(20,y,710,42,'panel2');box(20,y,710,42,row==i and'orange'or'line');txt(34,y+11,r[1],'text');button('morow'..i,r[2],500,y+3,220,36,row==i,{kind='motorRow',value=i},'cyan');y=y+47 end end
  if detail then button('moup','^',738,184,42,42,false,{kind='motorScroll',delta=-1},'cyan');button('modown','v',738,340,42,42,false,{kind='motorScroll',delta=1},'cyan')end
- button('motorRead','READ FC',360,402,125,36,rfMotorFocus==7+#p,{kind='motorControl',value='read'},'cyan');button('motorSave','SAVE FC',495,402,125,36,rfMotorFocus==8+#p,{kind='motorControl',value='save'},'orange');button('motorBack','< BACK',650,402,130,36,rfMotorFocus==9+#p,{kind='back'});footer('Ratio A : B is stored in FC. Calculated result is shown at left.')
+ button('motorRead','READ FC',360,402,125,36,rfMotorFocus==7+#p,{kind='motorControl',value='read'},'cyan');button('motorSave','SAVE FC',495,402,125,36,rfMotorFocus==8+#p,{kind='motorControl',value='save'},'orange');button('motorBack','< BACK',650,402,130,36,rfMotorFocus==9+#p,{kind='back'});footer('Select a motor to fill poles. SAVE FC writes the selected value.')
 end
+function rfMotorOpenCatalog()
+ if not rfMotorCatalog then
+  local ok,f=pcall(loadScript,'/SCRIPTS/RFLUASETUP/PAGESX/motorCatalog.lua')
+  if not ok or type(f)~='function'then motorState='MOTOR CATALOG FILE MISSING';return end
+  rfMotorCatalog=f()({header=header,footer=footer,txt=txt,button=button,apply=function(brand,m)
+   if not motorConfig or not motorConfig.poles then return false,'READ FC FIRST'end
+   local poles=m[3];if type(poles)~='number'or poles<2 or poles>100 or poles%2~=0 then return false,'POLES UNVERIFIED'end
+   motorConfig.poles[1]=poles;rfMotorKV=m[2];rfMotorModelLabel=brand..' '..m[1];motorDirty=true;motorState='POLES SET / UNSAVED';rfGearDisplay();return true
+  end})
+ end
+ rfMotorCatalog.open()
+end
+
 function rfDrawMotor()
+ if rfGearSetup and rfGearSetup.active then rfGearSetup.draw();return end
+ if rfGearCatalog and rfGearCatalog.active then rfGearCatalog.draw();return end
+ if rfMotorCatalog and rfMotorCatalog.active then rfMotorCatalog.draw();return end
  header('MOTORS',motorState)
  rfMotorTopButton(1,20,96,245);rfMotorTopButton(2,277,96,245);rfMotorTopButton(3,534,96,246)
  rfMotorTopButton(4,20,138,245);rfMotorTopButton(5,277,138,245);rfMotorTopButton(6,534,138,246)
@@ -1231,10 +1275,11 @@ end
 function drawEasyConfirm()
  hit={};fill(105,116,590,242,'panel');box(105,116,590,242,'orange');fill(105,116,590,42,'orange');txt(128,129,'APPLY FC ALIGNMENT & SAVE?','text',true);txt(135,185,string.format('ROLL %d   PITCH %d   YAW %d',easyDraft.roll,easyDraft.pitch,easyDraft.yaw),'cyan',true);txt(135,222,'DISARM and remove main/tail blades before continuing.','orange');button('easyNo','CANCEL',190,292,180,44,false,{kind='easyNo'},'cyan');button('easyYes','APPLY & SAVE',420,292,190,44,false,{kind='easyYes'},'orange')
 end
-easySteps={'BOARD & SENSOR ALIGNMENT','RECEIVER SETUP','SERVO / SWASH SETUP','TAIL / SETUP'}
+rfEasyMotorReturn=false
+easySteps={'BOARD & SENSOR ALIGNMENT','RECEIVER SETUP','SERVO / SWASH SETUP','TAIL / SETUP','MOTOR + GEAR RATIO INPUT'}
 function drawEasy()
  header('EASY SETUP','SELECT STEP');txt(20,94,'GUIDED HELICOPTER SETUP','cyan',true)
- for i,name in ipairs(easySteps)do local x=20;local y=122+(i-1)*66;local w=760;local focus=easyMenuFocus==i;fill(x,y,w,54,focus and'panel2'or'panel');box(x,y,w,54,focus and'cyan'or'line');fill(x,y,8,54,i==1 and'cyan'or'green');txt(x+18,y+16,tostring(i)..'. '..name,focus and'cyan'or'text',true);txt(x+w-82,y+18,'OPEN >','green');add('easyStep'..i,x,y,w,54,{kind='easyStep',index=i})end
+ for i,name in ipairs(easySteps)do local x=20;local y=122+(i-1)*54;local w=760;local focus=easyMenuFocus==i;fill(x,y,w,46,focus and'panel2'or'panel');box(x,y,w,46,focus and'cyan'or'line');fill(x,y,8,46,i==1 and'cyan'or'green');txt(x+18,y+12,tostring(i)..'. '..name,focus and'cyan'or'text',true);txt(x+w-82,y+14,'OPEN >','green');add('easyStep'..i,x,y,w,46,{kind='easyStep',index=i})end
  button('easyMenuBack','< HOME',610,400,170,36,easyMenuFocus==#easySteps+1,{kind='easyMenuBack'},'cyan');footer('Step 3: Servo / Swash setup > 3. Main Rotor / Swash Direction.')
 end
 function drawEasyReceiver()
@@ -1326,10 +1371,14 @@ end
 local function findHit(x,y)if(getTime and getTime()or 0)<rfChoiceTouchGuard then return nil end;for i=#hit,1,-1 do local b=hit[i];if x>=b.x and x<b.x+b.w and y>=b.y and y<b.y+b.h then return b end end end
 local function findHitId(id)for i=#hit,1,-1 do if hit[i].id==id then return hit[i],i end end end
 local function activate(a)
+ if a and a.kind=='gearCatalog'then if rfGearCatalog then rfGearCatalog.action(a.value,a.index)end;return end
+ if a and a.kind=='gearSetup'then if rfGearSetup then rfGearSetup.action(a.value,a.index)end;return end
+ if a and a.kind=='motorCatalog'then if rfMotorCatalog then rfMotorCatalog.action(a.value,a.index)end;return end
  if a and a.kind=='help'and page=='easyGeometry'then easyGeometry.activate({key='help'});return end
  if a and a.kind=='easyGeometry'then easyGeometry.activate(a);return end
  if a and a.kind=='easyMainRotor'then easyMainRotor.activate(a);return end
  if a and a.kind=='easyTail'then easyTail.activate(a);return end
+ if a and a.kind=='easyStep'and a.index==5 then rfEasyMotorReturn=true;easyMenuFocus=5;page='motors';rfMotorTab=1;rfMotorFocus=1;rfMotorScroll=1;requestMotor();return end
  if a and a.kind=='easyStep'and a.index==4 then ensureEasyTail();page='easyTail';easyMenuFocus=4;easyTail.open();return end
  if a and a.kind=='easyServo'then easyServo.activate(a);return end
  if a and a.kind=='easyStep'and a.index==3 then ensureEasyServo();page='easyServo';easyMenuFocus=3;easyServo.open();return end
@@ -1396,7 +1445,7 @@ local function activate(a)
  if a.kind=='motorLiveSet'then rfMotorLive=a.value;rfMotorRefreshRows();rfMotorPages[5][2][2]=rfMotorLive and'ON'or'OFF';return end
  if a.kind=='motorUnsyncedSet'then motorConfig.unsynced=a.value and 1 or 0;motorDirty=true;rfMotorRefreshRows();applyMotorLive();return end
  if a.kind=='escToggleSet'then local rows=rfMotorPages[2];local r=rows[rfMotorFocus-6];if r and escSensorConfig and escSensorConfig[r[3]]then escSensorConfig[r[3]].value=a.value and 1 or 0;motorDirty=true;rfRefreshEscRows();rfApplyEscLive()end;return end
- if a.kind=='rpmSensorSet'then rfRpmSensor=a.value;motorDirty=true;rfGearDisplay();applyMotorLive();return end
+ if a.kind=='rpmSensorSet'then if not motorFeature then motorState='READ FEATURES FIRST';return end;rfRpmSensor=a.value;rfMotorRpmDirty=true;motorDirty=true;rfGearDisplay();applyMotorLive();return end
  if a.kind=='motorOverrideSet'then rfSendMotorOverride(rfMotorOverridePct,a.value);rfMotorGaugeEdit=false;return end
  if a.kind=='motorOverrideSlider'then if rfMotorOverrideOn then rfMotorGaugeEdit=not rfMotorGaugeEdit else motorState='TURN OVERRIDE ON FIRST'end;return end
  if a.kind=='motorOverrideStep'then if rfMotorOverrideOn then rfSendMotorOverride(rfMotorOverridePct+a.delta,true)else motorState='TURN OVERRIDE ON FIRST'end;return end
@@ -1405,7 +1454,7 @@ local function activate(a)
  if a.kind=='motorControl'then if a.value=='save'then saveMotor()else requestMotor()end;return end
  if a.kind=='motorOverrideScroll'then local maxRow=rfMotor2Present()and 14 or 9;local row=math.max(1,math.min(maxRow,rfMotorFocus-6));row=math.max(1,math.min(maxRow,row+a.delta*3));rfMotorFocus=6+row;rfMotorScroll=row<=3 and 1 or(row<=6 and 2 or(row<=9 and 3 or 4));return end
  if a.kind=='motorScrollTo'then local rows=rfMotorPages[rfMotorTab];local visible=rfMotorTab==1 and 3 or 4;rfMotorScroll=math.max(1,math.min(math.max(1,#rows-visible+1),a.value));rfMotorFocus=6+rfMotorScroll;return end
- if a.kind=='motorScroll'then local rows=rfMotorPages[rfMotorTab];local visible=rfMotorTab==1 and 3 or 4;rfMotorScroll=math.max(1,math.min(math.max(1,#rows-visible+1),rfMotorScroll+a.delta));rfMotorFocus=6+rfMotorScroll;return end
+ if a.kind=='motorScroll'then local rows=rfMotorPages[rfMotorTab];if rfMotorTab==3 then if a.delta>0 then rfMotorScroll=math.max(9,math.min(#rows-3,rfMotorScroll+1))else rfMotorScroll=rfMotorScroll<=9 and 1 or rfMotorScroll-1 end;rfMotorFocus=6+rfMotorScroll;return end;local visible=rfMotorTab==1 and 3 or 4;rfMotorScroll=math.max(1,math.min(math.max(1,#rows-visible+1),rfMotorScroll+a.delta));rfMotorFocus=6+rfMotorScroll;return end
  if a.kind=='gyTab'then gyTab=a.value;gySel=1;gyScroll=1;gyBuildRows();return end
  if a.kind=='gyScroll'then gyScroll=math.max(1,math.min(math.max(1,#gyRows-5),gyScroll+a.delta));gySel=gyScroll;return end
  if a.kind=='gyRow'then gyActivate(a.index);return end
@@ -1481,8 +1530,8 @@ local function activate(a)
  if a.kind=='delta'then changePid(a.value);return end
  if a.kind=='pidctl'then pidSel=a.index;if a.index==18 then savePid()elseif a.index==19 then requestPid()else selectProfile()end;return end
  if help then return end
- if a.kind=='back'then if page=='receiverPreview'then page='receiver' elseif page=='statusAttitude'or page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page=rfEasyServoReturn and'easyServo'or'full';rfEasyServoReturn=false elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1
- elseif a.kind=='open'then selected=a.index;local list=page=='home'and home or full;local target=list[selected][3];if target=='exit'then return 2 else if target=='profiles'or target=='profileGains'or target=='rateTable'then advBackTarget=page=='home'and'home'or'full'end;page=target=='profileGains'and'profiles'or(target=='rateTable'and'rates'or target);selected=1;scroll=1;if target=='configuration'then cfgSel=2;cfgScroll=1;cfgRead()elseif target=='status'then statusLiveAt=-1000;requestInfo();requestStatusLive()elseif target=='receiver'then rxSel=2;rxScroll=1;rxProtocolUnlocked=false;rxTelemetryUnlocked=false;rxWarning=nil;statusLiveAt=-1000;rxRead()elseif target=='failsafe'then fsSel=1;fsScroll=1;fsRead()elseif target=='power'then pwTab=1;pwSel=1;pwScroll=1;pwRead()elseif target=='gyro'then gyTab=1;gySel=1;gyScroll=1;gyRead()elseif target=='rates'or target=='modes'or target=='adjustments'or target=='beeper'or target=='sensors'or target=='blackbox'then ensureAdvanced();advanced.open(target)elseif target=='profiles'then ensureAdvanced();advanced.open(target)elseif target=='profileGains'then ensureAdvanced();advanced.openGain()elseif target=='rateTable'then ensureAdvanced();advanced.openRateTable()elseif target=='servos'then servoSel=1;servoEdit=false;servoTab=1;servoSelectedId='st1';requestServos()elseif target=='mixer'then mixerMenu=false;mixerNav=1;mixerScroll=1;mixerSelectedId='mxt1';mixerCursor=2;mixerTab=1;directionSel=1;directionPass={false,false,false};directionState='READING ATTITUDE...';directionAt=-1000;requestMixerConfig()elseif target=='motors'then rfMotorTab=1;rfMotorFocus=1;rfMotorScroll=1;requestMotor()elseif target=='governor'then govTab=1;govFocus=1;govScroll=1;govRead()end end
+ if a.kind=='back'then if page=='motors'and rfEasyMotorReturn then if rfMotorOverrideOn then rfSendMotorOverride(0,false)end;rfEasyMotorReturn=false;page='easy';easyMenuFocus=5 elseif page=='receiverPreview'then page='receiver' elseif page=='statusAttitude'or page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page=rfEasyServoReturn and'easyServo'or'full';rfEasyServoReturn=false elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1
+ elseif a.kind=='open'then selected=a.index;local list=page=='home'and home or full;local target=list[selected][3];if target=='exit'then return 2 else if target=='profiles'or target=='profileGains'or target=='rateTable'then advBackTarget=page=='home'and'home'or'full'end;page=target=='profileGains'and'profiles'or(target=='rateTable'and'rates'or target);selected=1;scroll=1;if target=='configuration'then cfgSel=2;cfgScroll=1;cfgRead()elseif target=='status'then statusLiveAt=-1000;requestInfo();requestStatusLive()elseif target=='receiver'then rxSel=2;rxScroll=1;rxProtocolUnlocked=false;rxTelemetryUnlocked=false;rxWarning=nil;statusLiveAt=-1000;rxRead()elseif target=='failsafe'then fsSel=1;fsScroll=1;fsRead()elseif target=='power'then pwTab=1;pwSel=1;pwScroll=1;pwRead()elseif target=='gyro'then gyTab=1;gySel=1;gyScroll=1;gyRead()elseif target=='rates'or target=='modes'or target=='adjustments'or target=='beeper'or target=='sensors'or target=='blackbox'then ensureAdvanced();advanced.open(target)elseif target=='profiles'then ensureAdvanced();advanced.open(target)elseif target=='profileGains'then ensureAdvanced();advanced.openGain()elseif target=='rateTable'then ensureAdvanced();advanced.openRateTable()elseif target=='servos'then servoSel=1;servoEdit=false;servoTab=1;servoSelectedId='st1';requestServos()elseif target=='mixer'then mixerMenu=false;mixerNav=1;mixerScroll=1;mixerSelectedId='mxt1';mixerCursor=2;mixerTab=1;directionSel=1;directionPass={false,false,false};directionState='READING ATTITUDE...';directionAt=-1000;requestMixerConfig()elseif target=='motors'then rfEasyMotorReturn=false;rfMotorTab=1;rfMotorFocus=1;rfMotorScroll=1;requestMotor()elseif target=='governor'then govTab=1;govFocus=1;govScroll=1;govRead()end end
  elseif a.kind=='option'then selected=a.index;if selected==1 then saveMode=3-saveMode elseif selected==2 then armedLock=not armedLock end end
  return 0
 end
@@ -1503,7 +1552,7 @@ local function back()
  if easyConfirm then easyConfirm=false;easyState='SAVE CANCELLED';return 0 end
  if easyTrimConfirm then easyTrimConfirm=false;easyState='ACC TRIM SAVE CANCELLED';return 0 end
  if easyCalConfirm then easyCalConfirm=false;easyCalState='CALIBRATION CANCELLED';return 0 end
- if page=='home'then return 2 elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='easyReceiver'then page='easy';easyMenuFocus=2 elseif page=='configuration3d'then page='configuration' elseif page=='statusAttitude'then page=attitudeBackPage or'status' elseif page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page=rfEasyServoReturn and'easyServo'or'full';rfEasyServoReturn=false;servoEdit=false elseif page=='profiles'then page=advBackTarget or'full';pidEditing=false  elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1;return 0
+ if page=='motors'and rfEasyMotorReturn then if rfMotorOverrideOn then rfSendMotorOverride(0,false)end;rfEasyMotorReturn=false;page='easy';easyMenuFocus=5 elseif page=='home'then return 2 elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='easyReceiver'then page='easy';easyMenuFocus=2 elseif page=='configuration3d'then page='configuration' elseif page=='statusAttitude'then page=attitudeBackPage or'status' elseif page=='statusInstrument'then page='status' elseif page=='mixer'then disableMixerOverrides();if mixerMenu then page='full'else mixerMenu=true end elseif page=='servos'then disableOverrides();page=rfEasyServoReturn and'easyServo'or'full';rfEasyServoReturn=false;servoEdit=false elseif page=='profiles'then page=advBackTarget or'full';pidEditing=false  elseif page=='easyAlign'or page=='easyTrim'then page='easyBoardMenu';easyBoardFocus=1 elseif page=='easyBoardMenu'then page='easy';easyMenuFocus=1 elseif page=='full'or page=='options'or page=='easy'then page='home'else page='full'end;selected=1;scroll=1;return 0
 end
 local function normalizeEvent(event)
  if (EVT_VIRTUAL_NEXT_REPT and event==EVT_VIRTUAL_NEXT_REPT)or(EVT_VIRTUAL_INC and event==EVT_VIRTUAL_INC)or(EVT_VIRTUAL_INC_REPT and event==EVT_VIRTUAL_INC_REPT)then return EVT_VIRTUAL_NEXT end
@@ -1534,6 +1583,11 @@ local function run(event,touch)
  local fastRepeat=((EVT_VIRTUAL_NEXT_REPT and event==EVT_VIRTUAL_NEXT_REPT)or(EVT_VIRTUAL_PREV_REPT and event==EVT_VIRTUAL_PREV_REPT)or(EVT_VIRTUAL_INC_REPT and event==EVT_VIRTUAL_INC_REPT)or(EVT_VIRTUAL_DEC_REPT and event==EVT_VIRTUAL_DEC_REPT))and true or false
  local navStep=fastRepeat and 3 or 1;local valueStep=fastRepeat and 5 or 1
  event=normalizeEvent(event)
+ if not help and not numEdit and not choiceSelect then
+  if rfGearSetup and rfGearSetup.active and rfGearSetup.event(event)then event=0
+  elseif rfGearCatalog and rfGearCatalog.active and rfGearCatalog.event(event)then event=0 end
+ end
+ if rfMotorCatalog and rfMotorCatalog.active and not help and rfMotorCatalog.event(event)then event=0 end
  if not rfReady and not pidError then initRF();if rfReady then rf2.mspQueue.maxRetries=3;requestInfo()end end
  if rfReady then rf2.mspQueue:processQueue();rfFlushMixerLive() end
  if page=='mixer'and swipeMomentum~=0 and not pageSwipe then local now=getTime and getTime()or 0;if now>=swipeNext then local dir=swipeMomentum>0 and 1 or-1;mixerNav=math.max(1,math.min(mixerRowCount,mixerNav+dir));mixerSelectedId='mxr'..mixerNav;swipeMomentum=swipeMomentum-dir;swipeNext=now+3 end end
@@ -1675,7 +1729,37 @@ function ensureEasyGeometry()
   back=function(message)page='easyServo';easyServo.open(message)end
  })
 end
+function rfGearOpenSetup(brand,m)
+   if not rfGearSetup then
+    local g=loadScript('/SCRIPTS/RFLUASETUP/PAGESX/gearSetup.lua');if not g then return false,'GEAR SETUP MISSING'end
+    rfGearSetup=g()({header=header,footer=footer,txt=txt,button=button,line=function(x,y,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x),sy(y),sx(x2),sy(y2),SOLID or 0,col(c or'cyan'))end end,
+     number=function(i,v,lo,hi)
+      if i==11 then beginNumber('gearSetup',i,v/100,lo/100,hi/100);numEdit.scale=100;numEdit.decimals=1;numEdit.text=string.format('%.2f',v/100)
+      else beginNumber('gearSetup',i,v,lo,hi)end
+     end,
+     choice=function(title,rows,initial,cb)openChoice(title,rows,initial,cb)end,
+     apply=function(mn,md,tn,td,label)
+      if not motorConfig then return false,'READ FC FIRST'end
+      if (tn==nil)~=(td==nil)then return false,'INCOMPLETE TAIL RATIO'end
+      rfGearModel=#rfGearModels;rfMainN,rfMainD=mn,md;if tn~=nil then rfTailN,rfTailD=tn,td end
+      rfAircraftLabel=label;motorDirty=true;motorState='RATIOS / UNSAVED';rfGearDisplay();return true
+     end})
+   end
+   rfGearSetup.open(brand,m,rfMotorKV,rfMainN,rfMainD,rfTailN,rfTailD);return true
+end
+function rfGearOpenManual()
+ rfGearOpenSetup('Custom',{'Fitted gear train',0,0,'Enter actual fitted teeth',nil,'manual-graphics',{},'motor',{},nil})
+end
+function rfGearOpenCatalog()
+ if not rfGearCatalog then
+  local f=loadScript('/SCRIPTS/RFLUASETUP/PAGESX/gearCatalog.lua');if not f then motorState='GEAR CATALOG MISSING';return end
+  rfGearCatalog=f()({header=header,footer=footer,txt=txt,button=button,apply=rfGearOpenSetup})
+ end
+ rfGearCatalog.open()
+end
+
 return {run=run}
+
 
 
 

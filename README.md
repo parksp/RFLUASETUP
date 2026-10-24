@@ -1,5 +1,12 @@
 # RFLUASETUP
 
+> **2026-10-25: Latest saved candidate / 최신 저장 후보: 0.7.119 BETA.** Motor save isolation is implemented; other save-path issues remain unresolved. 모터 저장 경로만 수정했으며 다른 메뉴의 9개 감사 문제는 미해결입니다. 실물 검증 전입니다.
+>
+> [0.7.119 candidate ZIP](release/RFLUASETUP-0.7.119-MOTOR-SAVE-ISOLATION.zip) · [변경 내용 / Notes](RELEASE-0.7.119.md) · [전체 저장 경로 감사 / Audit](docs/SAVE-PATH-AUDIT-2026-10-25.md)
+>
+> The 0.7.34 information below is historical. 아래 0.7.34 안내는 이전 공개본 기록입니다.
+
+
 [English](#english) · [한국어](#한국어)
 
 ## English
