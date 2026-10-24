@@ -17,6 +17,12 @@ Current saved version: **0.7.119 BETA candidate — updated October 25, 2026 (KS
 
 [Download 0.7.119 BETA](https://github.com/parksp/RFLUASETUP/raw/refs/heads/main/release/RFLUASETUP-0.7.119-MOTOR-SAVE-ISOLATION.zip) · [Bilingual release notes](RELEASE-0.7.119.md)
 
+### Motors: aircraft gearing and motor pole catalogue
+
+- Select a helicopter manufacturer and model in Motors to look up its main/tail gear ratios and confirmed pinion/pulley options. The catalogue contains **19 brands / 572 model-version entries**, with **468 verified and 104 unverified entries** clearly distinguished.
+- Select a motor manufacturer, model and KV from the **16-brand motor catalogue** to fill the motor pole-count field where a supported pole count is available. Pole counts are model-specific; unknown or conflicting specifications are not presented as confirmed values.
+- Catalogue selection/APPLY and **SAVE FC** are separate actions. Battery/governor RPM estimates are references for manually choosing PROFILE 1/2/3 target RPM.
+
 ### Easy Setup progress
 
 - Main Rotor Geometry: independent axis overrides, calibration and swash trim. RETURN restores unsaved values.
@@ -74,6 +80,14 @@ Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 ---
 
 ## 한국어
+
+### 모터: 기체별 기어비 및 제조사별 모터 폴수
+
+- MOTOR 항목에서 **헬기 제조사 → 기체 모델**을 선택해 메인·테일 기어비와 확인된 피니언·풀리 옵션을 조회할 수 있습니다. **19개 제조사 / 572개 모델·버전**을 수록했으며, **확인 468개·미확인 104개**를 구분합니다.
+- **모터 제조사 → 모델·KV**를 선택하는 **16개 제조사 모터 카탈로그**를 넣었습니다. 폴수(극수)가 확인된 모델은 선택 시 모터 폴수 입력란에 반영됩니다. 미확인·자료 충돌 항목은 확정값으로 취급하지 않습니다.
+- 카탈로그 선택·APPLY와 **SAVE FC는 별도 동작**입니다. 배터리·거버너 RPM 계산은 PROFILE 1/2/3의 목표 RPM을 사용자가 정하기 위한 참고값입니다.
+
+
 
 RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식을 분석하여 EdgeTX 조종기용 Lua 인터페이스로 구현한 프로젝트입니다. 가능한 한 많은 Configurator 기능을 PC 없이 조종기에서 확인하고 설정할 수 있도록 만드는 것이 목표입니다.
 
