@@ -1,5 +1,5 @@
 -- RF SETUP HELI 0.2.0 - reviewed UI shell for TX16S / EdgeTX
-local VERSION="0.7.119 BETA"
+local VERSION="0.7.123 BETA"
 local page="home"
 local selected=1
 local scroll=1
@@ -18,7 +18,7 @@ local W,H=800,480
 local hit={}
 local saveMode=1
 local armedLock=true
-setupSel=1;setupConfirm=nil;setupState='READY';easyMenuFocus=1;easyBoardFocus=1;easyFocus=1;easyState='READ FC';easyDraft={roll=0,pitch=0,yaw=0};easyDirty=false;easyFlip=false;easyFacing=0;easyConfirm=false;easyTrimFocus=1;easyTrimDraft={roll=0,pitch=0};easyTrimDirty=false;easyTrimConfirm=false;easyRxFocus=1;easyRxScroll=1;easyRxState='READ ONLY';easyCalConfirm=false;easyCalState='READY'
+setupSel=1;setupConfirm=nil;setupState='READY';easyMenuFocus=1;easyBoardFocus=1;easyFocus=1;easySaving=false;easyState='READ FC';easyDraft={roll=0,pitch=0,yaw=0};easyDirty=false;easyFlip=false;easyFacing=0;easyConfirm=false;easyTrimFocus=1;easyTrimDraft={roll=0,pitch=0};easyTrimDirty=false;easyTrimConfirm=false;easyRxFocus=1;easyRxScroll=1;easyRxState='READ ONLY';easyCalConfirm=false;easyCalState='READY'
 cfgSel=2;cfgScroll=1;cfgState='NOT READ';cfgSaveConfirm=false;cfgSerialUnlocked=false;cfgSerialConfirm=false;cfgPortEdit=nil;cfgNameEdit=nil;cfgNameFocus=1;attitudeBackPage='status';cfgName='';cfgPilot=nil;cfgStats=nil;cfgAcc=nil;cfgFeature=0;cfgAdvanced={gyro=1,pid=1};cfgSensor={acc=0,baro=0,mag=0,gyro=0,fsr=0,move=0,duration=0,yaw=0,overflow=0};cfgAlign={roll=0,pitch=0,yaw=0};cfgSensorAlign={gyro1=0,gyro2=0,mag=0};cfgPorts={}
 homeHw={sensors=0,flashSupported=false,flashReady=false,flashTotal=0,flashUsed=0};homeHwAt=-1000;homeHwBusy=false;homeFlashHoldAt=nil;homeFlashHolding=false;homeFlashConfirm=false;homeFlashState='';statusRxScroll=1;statusYawOffset=0;statusInstrument=1;statusLive={state='WAITING FC',roll=0,pitch=0,yaw=0,rx={1500,1500,1500,1500,1000,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500,1500},voltage=0,current=0,mah=0,rssi=0,cpu=0,load=0,flags=0,profile=0,motors=0};statusLiveAt=-1000;statusLiveBusy=false;statusFastAt=-1000;statusFastBusy=false;statusFastPhase=0;statusLivePhase=0
 
@@ -1247,10 +1247,36 @@ end
 function easyRotate(delta)easyFacing=(easyFacing+delta)%4;easyPreset()end
 function easyFlipBoard()easyFlip=not easyFlip;easyPreset()end
 function easyCommitNumber(key,v)easyDraft[key]=easyNormalize(v);if key=='yaw'then easyFacing=math.floor(((easyDraft.yaw%360)+45)/90)%4 elseif key=='roll'then easyFlip=math.abs(easyDraft.roll)>=135 end;easyDirty=true;easyState='CUSTOM / NOT SAVED'end
+function easyCheckedSave(writeCommand,readCommand,payload,verified,done)
+ if easySaving then return end
+ easySaving=true;easyState='CHECKING DISARM...'
+ local function fail(msg)easySaving=false;easyState=msg end
+ local function send(cmd,p,ok)rf2.mspQueue:add({command=cmd,payload=p,processReply=ok,isolateReply=true,maxAttempts=1,postSendDelay=cmd==250 and .3 or nil,errorHandler=function()fail('REQUEST FAILED / MSP '..cmd..' / SAVE UNCONFIRMED')end})end
+ local function verify(afterSave)
+  send(readCommand,nil,function(_,b)
+   if not verified(b)then fail(afterSave and'EEPROM SENT / VERIFY FAILED'or'APPLY MISMATCH / NOT SAVED');return end
+   if afterSave then easySaving=false;done();return end
+   send(101,nil,function(_,status)
+    if #status<10 or status[7]%2~=0 then fail('DISARM / SAVE NOT SENT');return end
+    send(250,nil,function()verify(true)end)
+   end)
+  end)
+ end
+ send(101,nil,function(_,b)
+  if #b<10 or b[7]%2~=0 then fail('DISARM / SAVE NOT SENT');return end
+  send(writeCommand,payload,function()verify(false)end)
+ end)
+end
 function easySave()
  if not rfReady then easyState='FC OFFLINE';easyConfirm=false;return end
- cfgAlign.roll=easyDraft.roll;cfgAlign.pitch=easyDraft.pitch;cfgAlign.yaw=easyDraft.yaw;easyConfirm=false;easyState='APPLYING ALIGNMENT...';cfgWriteGroup('align')
- rf2.mspQueue:add({command=250,processReply=function()easyDirty=false;easyState='SAVED TO FC'end,errorHandler=function()easyState='SAVE FAILED - DISARM FC'end})
+ if easySaving then return end
+ local target={roll=easyDraft.roll,pitch=easyDraft.pitch,yaw=easyDraft.yaw};local p={}
+ for _,k in ipairs({'roll','pitch','yaw'})do rf2.mspHelper.writeU16(p,target[k])end
+ easyConfirm=false
+ easyCheckedSave(39,38,p,function(b)
+  if #b<6 then return false end;b.offset=1
+  for _,k in ipairs({'roll','pitch','yaw'})do if rf2.mspHelper.readS16(b)~=target[k]then return false end end;return true
+ end,function()cfgAlign=target;easyDirty=easyDraft.roll~=target.roll or easyDraft.pitch~=target.pitch or easyDraft.yaw~=target.yaw;easyState=easyDirty and'SAVED / NEW DRAFT NOT SAVED'or'ALIGNMENT SAVED / VERIFIED'end)
 end
 function easyLine(x1,y1,x2,y2,c,w)if statusDotLine then statusDotLine(x1,y1,x2,y2,c,w or 3)elseif lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end
 function drawEasyHeli()
@@ -1307,7 +1333,13 @@ end
 function easyTrimCommitNumber(key,v)easyTrimDraft[key]=v;easyTrimDirty=true;easyState='ACC TRIM / NOT SAVED'end
 function easyTrimSave()
  if not rfReady or not cfgAcc then easyState='FC / ACC TRIM NOT READY';easyTrimConfirm=false;return end
- cfgAcc.roll_trim.value=easyTrimDraft.roll;cfgAcc.pitch_trim.value=easyTrimDraft.pitch;easyTrimConfirm=false;easyState='SAVING ACC TRIM...';accTrimApi.write(cfgAcc);rf2.mspQueue:add({command=250,processReply=function()easyTrimDirty=false;easyState='ACC TRIM SAVED TO FC'end,errorHandler=function()easyState='SAVE FAILED - DISARM FC'end})
+ if easySaving then return end
+ local target={roll=easyTrimDraft.roll,pitch=easyTrimDraft.pitch};local p={}
+ rf2.mspHelper.writeU16(p,target.pitch);rf2.mspHelper.writeU16(p,target.roll);easyTrimConfirm=false
+ easyCheckedSave(239,240,p,function(b)
+  if #b<4 then return false end;b.offset=1
+  return rf2.mspHelper.readS16(b)==target.pitch and rf2.mspHelper.readS16(b)==target.roll
+ end,function()cfgAcc.roll_trim.value=target.roll;cfgAcc.pitch_trim.value=target.pitch;easyTrimDirty=easyTrimDraft.roll~=target.roll or easyTrimDraft.pitch~=target.pitch;easyState=easyTrimDirty and'SAVED / NEW DRAFT NOT SAVED'or'ACC TRIM SAVED / VERIFIED'end)
 end
 function drawEasyTrimConfirm()
  hit={};fill(105,116,590,242,'panel');box(105,116,590,242,'orange');fill(105,116,590,42,'orange');txt(128,129,'APPLY ACCELEROMETER TRIM?','text',true);txt(150,185,string.format('ROLL %.1f deg   PITCH %.1f deg',easyTrimDraft.roll/10,easyTrimDraft.pitch/10),'cyan',true);txt(135,222,'Keep the helicopter level and completely still.','orange');button('easyTrimNo','CANCEL',190,292,180,44,false,{kind='easyTrimNo'},'cyan');button('easyTrimYes','APPLY & SAVE',420,292,190,44,false,{kind='easyTrimYes'},'orange')
@@ -1371,6 +1403,7 @@ end
 local function findHit(x,y)if(getTime and getTime()or 0)<rfChoiceTouchGuard then return nil end;for i=#hit,1,-1 do local b=hit[i];if x>=b.x and x<b.x+b.w and y>=b.y and y<b.y+b.h then return b end end end
 local function findHitId(id)for i=#hit,1,-1 do if hit[i].id==id then return hit[i],i end end end
 local function activate(a)
+ if easySaving then return end
  if a and a.kind=='gearCatalog'then if rfGearCatalog then rfGearCatalog.action(a.value,a.index)end;return end
  if a and a.kind=='gearSetup'then if rfGearSetup then rfGearSetup.action(a.value,a.index)end;return end
  if a and a.kind=='motorCatalog'then if rfMotorCatalog then rfMotorCatalog.action(a.value,a.index)end;return end
@@ -1537,6 +1570,7 @@ local function activate(a)
 end
 local function maxItems()if page=='configuration'then return #cfgRows elseif page=='configuration3d'then return #cfg3dRows elseif page=='setup'then return 8 elseif page=='servos'then return 32 elseif page=='profiles'then return 20 elseif page=='easyAlign'then return 8 elseif page=='easyTrim'then return 4 elseif page=='easyBoardMenu'then return 5 elseif page=='easyReceiver'then return 4 elseif page=='easy'then return #easySteps elseif page=='home'then return #home elseif page=='full'then return #full elseif page=='options'then return 4 else return 0 end end
 local function back()
+ if easySaving then return 0 end
  if page=='easyGeometry'and not help then easyGeometry.back();return 0 end
  if page=='easyTail'and not help then easyTail.back();return 0 end
  if page=='easyMainRotor'and not help then easyMainRotor.back();return 0 end
@@ -1590,6 +1624,7 @@ local function run(event,touch)
  if rfMotorCatalog and rfMotorCatalog.active and not help and rfMotorCatalog.event(event)then event=0 end
  if not rfReady and not pidError then initRF();if rfReady then rf2.mspQueue.maxRetries=3;requestInfo()end end
  if rfReady then rf2.mspQueue:processQueue();rfFlushMixerLive() end
+ if easySaving then event=0;touch=nil end
  if page=='mixer'and swipeMomentum~=0 and not pageSwipe then local now=getTime and getTime()or 0;if now>=swipeNext then local dir=swipeMomentum>0 and 1 or-1;mixerNav=math.max(1,math.min(mixerRowCount,mixerNav+dir));mixerSelectedId='mxr'..mixerNav;swipeMomentum=swipeMomentum-dir;swipeNext=now+3 end end
  if page=='servos'and servoTab==3 and not help and not numEdit and not centerConfirm and overrideDrag==nil and not(type(touch)=='table'and((EVT_TOUCH_FIRST and event==EVT_TOUCH_FIRST)or(EVT_TOUCH_SLIDE and event==EVT_TOUCH_SLIDE)))then local now=getTime and getTime()or 0;if now-servoOutputAt>=20 and rf2.mspQueue:isProcessed()then servoOutputAt=now;requestServoOutput()end end
  if page=='mixer'and mixerTab==2 and not help then local now=getTime and getTime()or 0;if now-directionAt>=20 and rf2.mspQueue:isProcessed()then directionAt=now;requestDirectionAttitude()end end

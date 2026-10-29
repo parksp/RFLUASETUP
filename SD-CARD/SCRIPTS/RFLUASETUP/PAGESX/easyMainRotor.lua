@@ -10,7 +10,7 @@ return function(h)
  local names={'NONE','DIRECT / PASSTHROUGH','CCPM 120','CCPM 135','CCPM 140','FPM 90 L','FPM 90 V'}
  local axes={[3]=1,[4]=2,[5]=4}
  local function fail(s)busy=false;state=s or'FC ERROR / RETRY'end
- local function queue(cmd,payload,ok)rf2.mspQueue:add({command=cmd,payload=payload,processReply=ok,errorHandler=function()fail('FC ERROR / RETRY')end})end
+ local function queue(cmd,payload,ok)rf2.mspQueue:add({command=cmd,payload=payload,processReply=ok,errorHandler=function()fail('FC ERROR / RETRY')end,isolateReply=cmd==250,postSendDelay=cmd==250 and .3 or nil,maxAttempts=cmd==250 and 1 or nil})end
  local function read(done)
   h.mixer().read(function(_,c)
    rf2.mixerInputsApi=rf2.mixerInputsApi or rf2.useApi('mspMixerInputs')
@@ -51,15 +51,16 @@ return function(h)
       end
      end
      state='SAVING FC...'
-     local function verify()
+     local function verify(beforeSave)
       read(function(got,gi)
        for _,key in ipairs({'swash_type','main_rotor_dir'})do if edit[key]~=nil and got[key].value~=edit[key]then fail('VERIFY FAILED / RETRY SAVE');return end end
        for _,axis in ipairs(list)do local a,z=gi[axis],t[axis];if not a or a.rate~=z.rate or a.min~=z.min or a.max~=z.max then fail('VERIFY FAILED / RETRY SAVE');return end end
+       if beforeSave then queue(250,nil,function()verify(false)end);return end
        cfg=got;inputs=gi;edit={};dirty=false;busy=false;ready=true;state='SAVED / VERIFIED'
       end)
      end
      local function writeInput(n)
-      local axis=list[n];if not axis then queue(250,nil,verify);return end
+      local axis=list[n];if not axis then verify(true);return end
       local p={axis};for _,k in ipairs({'rate','min','max'})do rf2.mspHelper.writeU16(p,t[axis][k])end
       queue(171,p,function()writeInput(n+1)end)
      end

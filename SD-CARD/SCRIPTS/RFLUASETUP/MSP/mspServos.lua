@@ -1,9 +1,13 @@
-local function getServoConfigurations(callback, callbackParam, onError)
+local function getServoConfigurations(callback, callbackParam, onError, options)
     local message = {
         command = 120, -- MSP_SERVO_CONFIGURATIONS
+        isolateReply = true,
+        maxAttempts = options and options.maxAttempts,
+        postSendDelay = options and options.postSendDelay,
         errorHandler = onError,
         processReply = function(self, buf)
             if onError and (#buf < 1 or #buf < 1 + buf[1] * 16) then onError(); return end
+            buf.offset = 1
             local servoCount = rf2.mspHelper.readU8(buf)
             --rf2.print("Servo count "..tostring(servoCount))
             local configs = {}
@@ -33,6 +37,8 @@ end
 local function setServoConfiguration(servoIndex, servoConfig, onSaved, onError)
     local message = {
         command = 212, -- MSP_SET_SERVO_CONFIGURATION
+        isolateReply = true,
+        maxAttempts = onError and 1 or nil,
         processReply = onSaved,
         errorHandler = onError,
         payload = {}

@@ -12,6 +12,7 @@ return function(h)
  local live,lastPWM={},-1000
  local returnAt,notice=nil,nil
  local review=nil
+ local verifyDetail=nil
  local draft,defaultTab,defaultReview,pulseChosen={},1,false,false
  local fields={'mid','min','max','scaleNeg','scalePos','rate','speed','flags'}
  local epoch,flight,pending,polling=0,false,nil,false
@@ -22,7 +23,7 @@ return function(h)
  local function now()return getTime and getTime()or 0 end
  local function copy(t)local r={};for k,v in pairs(t)do r[k]=type(v)=='table'and copy(v)or v end;return r end
  local function any()return enabled[0]or enabled[1]or enabled[2]end
- local function queue(cmd,payload,ok,err)rf2.mspQueue:add({command=cmd,payload=payload,processReply=ok,errorHandler=err})end
+ local function queue(cmd,payload,ok,err)rf2.mspQueue:add({command=cmd,payload=payload,processReply=ok,errorHandler=err,isolateReply=cmd==250,postSendDelay=cmd==250 and .3 or nil,maxAttempts=cmd==250 and 1 or nil})end
  local function fail(msg)
   stop(function()blocked=true;state=msg..' / RTN TO RETRY'end)
  end
@@ -84,7 +85,7 @@ return function(h)
    cfg=copy(d);ready=true;busy=false;state='SELECT S1 / S2 / S3';if done then done()end
   end,nil,function()if token==epoch then busy=false;blocked=true;state='READ FAILED / RTN TO RETRY'end end)
  end
- function M.open(message)page='menu';focus=1;state='SELECT CENTER TRIM';if message then notice=message end end
+ function M.open(message)page='menu';focus=1;state='SELECT CENTER TRIM';verifyDetail=nil;if message then notice=message end end
  local function submenu()
   page='menu';ready=false;blocked=false;exitAfter=false;returnAt=nil;focus=1;state='OVERRIDES RELEASED'
  end
@@ -132,7 +133,7 @@ return function(h)
  end
  local function writeSelected(patches,success,flagMasks)
   -- Refresh full configs immediately before selective writes; preserve rate, limits and tail.
-  transaction=true;busy=true;local token=epoch
+  verifyDetail=nil;transaction=true;busy=true;local token=epoch
   h.servos().getServoConfigurations(function(_,fresh)
    if token~=epoch then return end
    for i,p in pairs(patches)do
@@ -147,23 +148,45 @@ return function(h)
      d.value=v
     end
    end
+   -- Verify RAM before EEPROM, then verify again after the save has settled.
+   -- Retry reads only: never repeat a write or silently accept an FC-clamped value.
+   local function verify(saved,done,attempt)
+    attempt=attempt or 1
+    h.servos().getServoConfigurations(function(_,got)
+     if token~=epoch then return end
+     local mismatch=nil
+     for j in pairs(patches)do for _,k in ipairs(fields)do
+      local expected=fresh[j][k].value
+      local actual=got[j]and got[j][k]and got[j][k].value
+      if actual~=expected and not mismatch then mismatch='S'..(j+1)..' '..k..': '..tostring(expected)..' -> '..tostring(actual)end
+     end end
+     if mismatch then
+      if attempt<3 then verify(saved,done,attempt+1);return end
+      verifyDetail=mismatch;transaction=false
+      fail(saved and'EEPROM SENT / VERIFY FAILED'or'APPLY MISMATCH / NOT SAVED');return
+     end
+     done(got)
+    end,nil,function()
+     if token~=epoch then return end
+     if attempt<3 then verify(saved,done,attempt+1);return end
+     transaction=false;fail(saved and'EEPROM SENT / READ FAILED'or'APPLY READ FAILED / NOT SAVED')
+    end,{maxAttempts=1,postSendDelay=.15})
+   end
    local function write(i)
     if token~=epoch then return end
     if i<=2 then
      if not patches[i]then write(i+1);return end
-     h.servos().setServoConfiguration(i,fresh[i],function()write(i+1)end,
-      function()transaction=false;fail('PARTIAL APPLY / NOT SAVED')end)
+     h.servos().setServoConfiguration(i,fresh[i],function()if token==epoch then write(i+1)end end,
+      function()if token==epoch then transaction=false;fail('PARTIAL APPLY / NOT SAVED')end end)
     else
-     queue(250,nil,function()
-      if token~=epoch then return end
-      h.servos().getServoConfigurations(function(_,got)
-       if token~=epoch then return end
-       for j,p in pairs(patches)do for k,v in pairs(p)do
-        if not got[j]or not got[j][k]or got[j][k].value~=v then transaction=false;fail('SAVED / VERIFY MISMATCH');return end
-       end end
-       cfg=copy(got);finishWrite(success)
-      end,nil,function()transaction=false;fail('SAVED / VERIFY READ FAILED')end)
-     end,function()transaction=false;fail('APPLIED / EEPROM SAVE FAILED')end)
+     verify(false,function()
+      statusCheck(function()
+       queue(250,nil,function()
+        if token~=epoch then return end
+        verify(true,function(got)cfg=copy(got);verifyDetail=nil;finishWrite(success)end)
+       end,function()if token==epoch then transaction=false;fail('APPLIED / EEPROM SAVE FAILED')end end)
+      end)
+     end)
     end
    end
    -- A fresh arm check is also required after release/config reads, before any write.
@@ -246,7 +269,7 @@ return function(h)
    h.servos().getServoConfigurations(function(_,fresh)
     if token~=epoch then return end
     if not fresh[i]or not fresh[i].flags then fail('DIRECTION READ FAILED');return end
-    writeSelected({[i]={flags=bit32.bxor(fresh[i].flags.value,1)}},'S'..(i+1)..' DIRECTION SAVED')
+    writeSelected({[i]={flags=bit32.bxor(fresh[i].flags.value,1)}},'S'..(i+1)..' DIRECTION SAVED',{[i]=1})
    end,nil,function()if token==epoch then fail('DIRECTION READ FAILED')end end)
   end)
  end
@@ -303,7 +326,7 @@ return function(h)
    if not ready or blocked then return end
    if defaultReview then
     if a.key=='cancel'then defaultReview=false;state='DRAFT / NOT SAVED'
-    elseif a.key=='confirm'then local patches=copy(draft);local masks={};for i=0,2 do masks[i]=bit32.bxor(cfg[i].flags.value,draft[i].flags)end;defaultReview=false;stop(function()
+    elseif a.key=='confirm'then local patches={};local masks={};for i=0,2 do patches[i]={};for _,k in ipairs(fields)do if draft[i][k]~=cfg[i][k].value then patches[i][k]=draft[i][k]end end;masks[i]=bit32.bxor(cfg[i].flags.value,draft[i].flags)end;defaultReview=false;stop(function()
      if exitAfter then submenu()else writeSelected(patches,'DEFAULTS SAVED / VERIFIED',masks)end
     end)end
     return
@@ -434,7 +457,7 @@ return function(h)
     end
     btn('REVIEW & SAVE S1-S3',30,398,740,38,'dsave',nil,'orange')
    end
-   h.footer('Draft only until confirmed / Check servo rated pulse & Hz / RTN: discard & return');return
+   h.footer(verifyDetail or'Draft only until confirmed / Check servo rated pulse & Hz / RTN: discard & return');return
   end
   if review then
    h.fill(100,112,600,316,'panel2');h.box(100,112,600,316,'orange')
@@ -489,7 +512,7 @@ return function(h)
    end
   end
   h.fill(644,285,124,2,'orange')
-  h.footer('Red dots: hold / Green dots: trim together / Green numbers: live us / RTN: release')
+  h.footer(verifyDetail or'Red dots: hold / Green dots: trim together / Green numbers: live us / RTN: release')
  end
  function M.event(e,touch)
   if e==EVT_VIRTUAL_EXIT then M.back();return 0 end

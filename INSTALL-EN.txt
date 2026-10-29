@@ -1,28 +1,11 @@
-RFLUASETUP 0.7.34 BETA Installation
-==================================
+RFLUASETUP 0.7.123 BETA Installation
 
-RFLUASETUP is an unfinished BETA tool developed from the menus and workflow of Rotorflight Configurator 2.3.0. It aims to make as much of the Configurator as practical available through a transmitter Lua interface.
+1. Download RFLUASETUP-0.7.123-SERVO-SAVE-VERIFY.zip from the GitHub release.
+2. Keep a PC Configurator backup of the FC settings and a backup of the radio script.
+3. Extract the ZIP. Copy the contents of SD-CARD to the radio SD card, replacing the existing script files.
+4. Start RFLUASETUP and check that the footer says 0.7.123 BETA.
+5. Easy Setup center trim: OVERRIDE ALL (or selected servos), adjust position, CENTER APPLY, then CONFIRM & SAVE. The measured FC output PWM becomes the center pulse.
 
-Current scope
-- Best suited for checking settings and status at the flying field when a PC is unavailable.
-- Unfinished intermediate release: Easy Setup is implemented through Main Rotor Geometry and dedicated Tail Setup, not the complete helicopter setup workflow.
-- Current changes passed simulated FC, Lua event, rendered-screen and syntax checks; physical aircraft/transmitter validation is still required.
-- Read RELEASE-0.7.34.md for current features and limitations.
-- TX16S MK2: a user briefly checked operation and reports it appears to work. Full feature/safety validation remains incomplete.
-- Current test target: RadioMaster TX16S MK3 with its current EdgeTX environment and NEXUS Gyro with the currently used Rotorflight 4.6.x firmware.
-- Other radios, screen sizes, FCs, and firmware versions are not guaranteed.
+APPLY MISMATCH / NOT SAVED means this transaction did not send EEPROM; temporary RAM values may already differ. EEPROM SENT / VERIFY FAILED means the save acknowledged but readback did not match; some values may be saved. The footer identifies the servo, field and expected/actual values. Check against the PC Configurator if a mismatch persists.
 
-Installation
-1. Back up the transmitter SD card and the FC configuration.
-2. Extract the distribution ZIP on a PC.
-3. Copy the SCRIPTS folder inside SD-CARD to the root of the transmitter SD card.
-4. Verify /SCRIPTS/RFLUASETUP/main.lua.
-5. Replace the complete old RFLUASETUP folder. Do not mix release files.
-6. Restart EdgeTX and open RFLUASETUP from the system or TOOLS page.
-7. Confirm FC LINK and v0.7.34 BETA.
-
-Disconnect the motor and remove blades before bench testing. Verify center pulse and rate against your servo manufacturer's specifications before connecting servos. Presets are not universal compatibility guarantees.
-
-Use entirely at your own judgment and responsibility. Compare values with Rotorflight Configurator 2.3.0 and bench-test all flight functions before flying.
-
-Created by BLADE PARK
+See RELEASE-0.7.123.md and docs/AUDIT-0.7.123.md for scope, tests and limitations. Nine separate prior Full Setup findings remain unresolved. Preliminary user feedback suggests center saving works; complete hardware and firmware validation is not claimed. TX16S MK2 units may show clipped UI elements.

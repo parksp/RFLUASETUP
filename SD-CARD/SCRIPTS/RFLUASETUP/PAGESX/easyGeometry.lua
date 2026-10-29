@@ -194,16 +194,18 @@ return function(h)
    local keys={};for k in pairs(expected)do keys[#keys+1]=k end
    local function nextField(n)
     local k=keys[n];if k then apply(k,expected[k],function()nextField(n+1)end);return end
-    q(250,nil,function()
+    local function verify(beforeSave)
      read(function(c,t)
       for k,v in pairs(expected)do
-       local good=trimKeys[k]and c[trimKeys[k]].value==round(v*10)or k=='geometry'and c.swash_geo_correction.value==round(v*5)or k=='collective'and math.abs(t[4].rate)==round(v*10)or k=='cyclic'and math.abs(t[1].rate)==round(v*10)and math.abs(t[2].rate)==round(v*10)
-       if not good then fault('SAVE VERIFY FAILED');return end
+       local good=trimKeys[k]and c[trimKeys[k]].value==round(v*10)or k=='geometry'and c.swash_geo_correction.value==round(v*5)or k=='collective'and t and math.abs(t[4].rate)==round(v*10)or k=='cyclic'and t and math.abs(t[1].rate)==round(v*10)and math.abs(t[2].rate)==round(v*10)
+       if not good then fault(beforeSave and'APPLY VERIFY FAILED / NOT SAVED'or'EEPROM SENT / VERIFY FAILED');return end
       end
+      if beforeSave then q(250,nil,function()verify(false)end,nil,{isolateReply=true,maxAttempts=1,postSendDelay=.3});return end
       cfg=c;inputs=t or{};inputsAvailable=t~=nil;syncValues(c,t);dirty={};undoConfig={};undoRates={};lastConfig={};lastRates={};working=false;saving=false;state=over and'SAVED / VERIFIED / ALL ON'or'SAVED / VERIFIED / ALL OFF'
       if leaving then finishExit()end
      end,not expected.cyclic and not expected.collective)
-    end)
+    end
+    verify(true)
    end
    nextField(1)
   end)

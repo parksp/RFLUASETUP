@@ -97,8 +97,8 @@ return function(h)
    h.footer('Search within this manufacturer. Words match model name.');return
   elseif stage=='review'then
    local y=wrap(selected[1],28,96,65)
-   h.txt(28,y+15,selected[10]and(selected[10][1]==0 and'SELECT DOCUMENTED CONFIGURATION'or'PUBLISHED MANUFACTURER RATIOS')or(selected[3]>0 and'MANUAL VERIFIED DEFAULT'or'MANUAL INPUT REQUIRED'),'orange',true)
-   wrap((selected[8]=='independent_tail'or selected[8]=='independent_direct')and'Independent tail motor: no fixed tail/main gear ratio. APPLY MAIN changes only the main fields.'or selected[10]and selected[4]or(selected[8]=='direct'and'Direct main drive, fixed 1:1. Check the fitted tail belt pulleys.'or selected[3]>0 and'Check the fitted pinion and pulleys. Defaults refer to the documented version.'or'No default ratios supplied. Enter the complete main and tail drive using your actual parts.'),28,y+70,70)
+   h.txt(28,y+15,selected[11]or selected[10]and(selected[10][1]==0 and'SELECT DOCUMENTED CONFIGURATION'or'PUBLISHED MANUFACTURER RATIOS')or(selected[3]>0 and'MANUAL VERIFIED DEFAULT'or'MANUAL INPUT REQUIRED'),'orange',true)
+   wrap((selected[8]=='independent_tail'or selected[8]=='independent_direct')and'Independent tail motor: no fixed tail/main gear ratio. APPLY MAIN changes only the main fields.'or (selected[10]or selected[11])and selected[4]or(selected[8]=='direct'and'Direct main drive, fixed 1:1. Check the fitted tail belt pulleys.'or selected[3]>0 and'Check the fitted pinion and pulleys. Defaults refer to the documented version.'or'No default ratios supplied. Enter the complete main and tail drive using your actual parts.'),28,y+70,70)
    btn('apply','CONFIGURE GEARS / RPM >',28,360,470,focus==1,'apply')
    btn('back','< MODELS',530,360,230,focus==2,'back');h.footer('Preview only. Applying ratios and SAVE FC are separate actions.');return
   end

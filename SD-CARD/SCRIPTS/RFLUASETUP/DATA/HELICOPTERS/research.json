@@ -1,6 +1,6 @@
 {
-  "verified": 468,
-  "entries": 572,
+  "verified": 478,
+  "entries": 586,
   "brands": [
     {
       "brand": "ALIGN",
@@ -39692,8 +39692,1529 @@
           "id": "f3ba4d2e18a91689"
         }
       ]
+    },
+    {
+      "brand": "STEAM",
+      "models": [
+        {
+          "name": "AK400",
+          "ready": true,
+          "note": "Factory 400/420 DIRECT-DRIVE manual p36: main 1:1, tail 4:1; p9 direct motor. NOT AK420 PRO/HDX. Published ratios, not invented teeth.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/?paged=2",
+          "id": "86d3d851975ea67f",
+          "geometry": null,
+          "options": [],
+          "input_type": "direct",
+          "links": [],
+          "published_ratios": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "evidence": {
+            "file": "heli-catalog-research\\steam-2026-10-26\\ak400-420-direct.pdf",
+            "sha256": "9e4ebb5bd8a33cf2bef08f8112f54e8ec113fd4da26d5b61a7b9d7984a6b8fe9",
+            "bytes": 10283724,
+            "page": 36,
+            "source": "https://www.acrowood.net/WebRoot/Store19/Shops/61710435/6644/F9B8/4157/EEF5/EBF7/0A0C/6D0C/003B/AK400_Bauanleitung.pdf",
+            "kind": "manufacturer_manual_mirror"
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "AK420",
+          "ready": true,
+          "note": "Factory 400/420 DIRECT-DRIVE manual p36: main 1:1, tail 4:1; p9 direct motor. NOT AK420 PRO/HDX. Published ratios, not invented teeth.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/?paged=2",
+          "id": "cfa77598fa0dd5df",
+          "geometry": null,
+          "options": [],
+          "input_type": "direct",
+          "links": [],
+          "published_ratios": [
+            1,
+            1,
+            1,
+            4
+          ],
+          "evidence": {
+            "file": "heli-catalog-research\\steam-2026-10-26\\ak400-420-direct.pdf",
+            "sha256": "9e4ebb5bd8a33cf2bef08f8112f54e8ec113fd4da26d5b61a7b9d7984a6b8fe9",
+            "bytes": 10283724,
+            "page": 36,
+            "source": "https://www.acrowood.net/WebRoot/Store19/Shops/61710435/6644/F9B8/4157/EEF5/EBF7/0A0C/6D0C/003B/AK400_Bauanleitung.pdf",
+            "kind": "manufacturer_manual_mirror"
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "AK420 PRO",
+          "ready": true,
+          "note": "Own HeliDirect model specification: pinion12T/main75T, fronttail81T/rear20T. Dealer-documented reference; inspect fitted parts. NOT direct-drive400/420.",
+          "source": "https://www.helidirect.com/collections/steamrc-helicopter-kit",
+          "id": "60c64aef68b34aaa",
+          "geometry": [
+            12,
+            75,
+            1,
+            1,
+            81,
+            20,
+            1,
+            1
+          ],
+          "options": [],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": null,
+          "evidence": {
+            "file": "heli-catalog-research\\steam-2026-10-26\\pro.html",
+            "sha256": "6d86f6d581b89aafff4157a5c104cc2f61409ffd988b4e10b0f35abda3040772",
+            "source": "https://www.helidirect.com/collections/steamrc-helicopter-kit",
+            "kind": "dealer_own_model_specification"
+          },
+          "verified": false,
+          "verification_level": "dealer_reference",
+          "display_provenance": "DEALER DOCUMENTED REFERENCE"
+        },
+        {
+          "name": "AK420-HDX",
+          "ready": true,
+          "note": "Own HeliDirect model specification: pinion12T/main75T, fronttail81T/rear20T. Dealer-documented reference; inspect fitted parts. NOT direct-drive400/420.",
+          "source": "https://www.helidirect.com/collections/steamrc-helicopter-kit",
+          "id": "34a4316689888d15",
+          "geometry": [
+            12,
+            75,
+            1,
+            1,
+            81,
+            20,
+            1,
+            1
+          ],
+          "options": [],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": null,
+          "evidence": {
+            "file": "heli-catalog-research\\steam-2026-10-26\\hdx.html",
+            "sha256": "d3914ebaaedf1f5ad6d043607e41bf5e19ff4714d602fac8ecff89d00c2b8133",
+            "source": "https://www.helidirect.com/products/steamrc-ak420-hdx-helicopter-kit-with-blades",
+            "kind": "dealer_own_model_specification"
+          },
+          "verified": false,
+          "verification_level": "dealer_reference",
+          "display_provenance": "DEALER DOCUMENTED REFERENCE"
+        },
+        {
+          "name": "AK550",
+          "ready": true,
+          "note": "Factory AK550 parts: AK55032/33 main109/113T, AK55034/35/36 motor11/12/13T, AK5508 front86T, AK55011 rear19T. Select fitted combination, no universal stock assumed. NOT MK550.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "9862131e49641a7e",
+          "geometry": null,
+          "options": [
+            {
+              "label": "Fitted 109T main / 11T motor / 19T tail",
+              "geometry": [
+                11,
+                109,
+                1,
+                1,
+                86,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 109T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                109,
+                1,
+                1,
+                86,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 109T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                109,
+                1,
+                1,
+                86,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 113T main / 11T motor / 19T tail",
+              "geometry": [
+                11,
+                113,
+                1,
+                1,
+                86,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 113T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                113,
+                1,
+                1,
+                86,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 113T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                113,
+                1,
+                1,
+                86,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            }
+          ],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "evidence": {
+            "sources": [
+              {
+                "title": "AK550大齿盘109T AK55032",
+                "url": "https://1krc.com/index.php/product/ak550%e5%a4%a7%e9%bd%bf%e7%9b%98109t-ak55032/",
+                "file": "product-830483afd485.html",
+                "sha256": "6eb059cd17307914be3104b5b1baba39b960e02a50d97ce8213c0949a18c2b8b"
+              },
+              {
+                "title": "AK550大齿盘113T  AK55033",
+                "url": "https://1krc.com/index.php/product/ak550%e5%a4%a7%e9%bd%bf%e7%9b%98113t-ak55033/",
+                "file": "product-7a257166dd9b.html",
+                "sha256": "33ad198b4f0404cadab82f56873d0cbd7e59cd7f1133bc06fd589cf2310fbdcc"
+              },
+              {
+                "title": "AK550电机铜齿11T AK55034",
+                "url": "https://1krc.com/index.php/product/ak550%e7%94%b5%e6%9c%ba%e9%93%9c%e9%bd%bf11t-ak55034/",
+                "file": "product-5f9e63eea97e.html",
+                "sha256": "4b6ad0cd16a1bb6291289384c4740db11cb2f65dc7d75e921c571640403bf1ba"
+              },
+              {
+                "title": "AK550电机铜齿12T AK55035",
+                "url": "https://1krc.com/index.php/product/ak550%e7%94%b5%e6%9c%ba%e9%93%9c%e9%bd%bf12t-ak55035/",
+                "file": "product-3db211d6b9d0.html",
+                "sha256": "a544d8054e95b05658a276fcd9d8483eea1912bec71838d754dc0c6030f485e1"
+              },
+              {
+                "title": "AK550电机铜齿13T AK55036",
+                "url": "https://1krc.com/index.php/product/ak550%e7%94%b5%e6%9c%ba%e9%93%9c%e9%bd%bf13t-ak55036/",
+                "file": "product-99bbbc5fa639.html",
+                "sha256": "1eaa96fcb44853670d1c57986940b4e410620f2b352cc87e92767b31d57aabaa"
+              },
+              {
+                "title": "AK550尾驱动轮86T哑黑 AK5508",
+                "url": "https://1krc.com/index.php/product/ak550%e5%b0%be%e9%a9%b1%e5%8a%a8%e8%bd%ae86t%e5%93%91%e9%bb%91-ak5508/",
+                "file": "product-1af49065dbd0.html",
+                "sha256": "7d58b5257fac05466ec7d3808600d9574bc0f624cbbcddbcf24afa2b039cd74e"
+              },
+              {
+                "title": "AK550 19T-3M尾齿轮 AK55011",
+                "url": "https://1krc.com/index.php/product/ak550-19t-3m%e5%b0%be%e9%bd%bf%e8%bd%ae-ak55011/",
+                "file": "product-7aaed6798b53.html",
+                "sha256": "6f69e6b1c40352bdc4500d463b0f1940871331d2bb042641957f9418f340c59b"
+              }
+            ],
+            "kind": "manufacturer_exact_model_and_applicable_drive_parts",
+            "review": "Numerical specifications; no counts from pictures; actual fitted option selection required where stock is unspecified."
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "MK550",
+          "ready": true,
+          "note": "Own factory exact kit specification: motor15T/main153T, autorotation42T/tail9T. Exact tail42/9, not rounded4.66. Not AK550; inspect fitted revision.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "ec197744c6670bf4",
+          "geometry": [
+            15,
+            153,
+            1,
+            1,
+            42,
+            9,
+            1,
+            1
+          ],
+          "options": [],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": null,
+          "evidence": {
+            "sources": [
+              {
+                "title": "妙550空机脚架款 MK55A00-BC",
+                "url": "https://1krc.com/index.php/product/%e5%a6%99550%e7%a9%ba%e6%9c%ba%e8%84%9a%e6%9e%b6%e6%ac%be-mk55a00-bc/",
+                "file": "product-de360aff1736.html",
+                "sha256": "21c15499de9a03dd6322cba4b9893f2084ad98b64251262797a13c8d530d0c5b"
+              }
+            ],
+            "kind": "manufacturer_exact_model_and_applicable_drive_parts",
+            "review": "Numerical specifications; no counts from pictures; actual fitted option selection required where stock is unspecified."
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "MK550 DFC",
+          "ready": true,
+          "note": "Own factory exact kit specification: motor15T/main153T, autorotation42T/tail9T. Exact tail42/9, not rounded4.66. Not AK550; inspect fitted revision.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "7cdf81bc49ad83bf",
+          "geometry": [
+            15,
+            153,
+            1,
+            1,
+            42,
+            9,
+            1,
+            1
+          ],
+          "options": [],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": null,
+          "evidence": {
+            "sources": [
+              {
+                "title": "妙 550DFC直升机 MK55DFC-C",
+                "url": "https://1krc.com/index.php/product/%e5%a6%99-550dfc%e7%9b%b4%e5%8d%87%e6%9c%ba-mk55dfc-c/",
+                "file": "product-84fae482bf2e.html",
+                "sha256": "87e312c712f7c6d4c560642c883e9e9a4225ae0185cfe92e025f13d371c8d7c0"
+              }
+            ],
+            "kind": "manufacturer_exact_model_and_applicable_drive_parts",
+            "review": "Numerical specifications; no counts from pictures; actual fitted option selection required where stock is unspecified."
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "MK600",
+          "ready": true,
+          "note": "Own factory exact kit specification: motor12T/main106T, autorotation42T/tail9T. Exact tail42/9, not rounded4.66. MK6A00-BC; not copied from 550 or DFC.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "56b788c5faad99a8",
+          "geometry": [
+            12,
+            106,
+            1,
+            1,
+            42,
+            9,
+            1,
+            1
+          ],
+          "options": [],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": null,
+          "evidence": {
+            "sources": [
+              {
+                "title": "妙600空机脚架款 MK6A00-BC",
+                "url": "https://1krc.com/index.php/product/%e5%a6%99600%e7%a9%ba%e6%9c%ba%e8%84%9a%e6%9e%b6%e6%ac%be-mk6a00-bc/",
+                "file": "product-b6295b958a38.html",
+                "sha256": "4f4bd04c79f87fd5bc7e85f3d6f59bf7df7e92b9bf9e718ae0bcebdbe3063df8"
+              }
+            ],
+            "kind": "manufacturer_exact_model_and_applicable_drive_parts",
+            "review": "Numerical specifications; no counts from pictures; actual fitted option selection required where stock is unspecified."
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "MK600 DFC",
+          "ready": false,
+          "note": "SOURCE CONFLICT: factory MK600DFC-C page contains a table explicitly labelled550,560mm blades,153T/15T and42/9. Not accepted as600DFC gearing. No guessed106T/12T or copied550 values. Enter actual fitted main and tail teeth.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "166a51a30ca69837",
+          "geometry": null,
+          "options": [],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": null,
+          "evidence": {
+            "sources": [
+              {
+                "title": "妙 600DFC直升机 MK600DFC-C",
+                "url": "https://1krc.com/index.php/product/%e5%a6%99-600dfc%e7%9b%b4%e5%8d%87%e6%9c%ba-mk600dfc-c/",
+                "file": "product-905a83c48243.html",
+                "sha256": "0a42c0f18452badb8c12cccc542420e4fbc859df25d65995966c4a31d9e946d1"
+              }
+            ],
+            "conflict": "600DFC title vs550 specification table",
+            "rejected_as_default": {
+              "main": 153,
+              "pinion": 15,
+              "tail_front": 42,
+              "tail_rear": 9
+            }
+          },
+          "verified": false,
+          "verification_level": "source_conflict",
+          "display_provenance": "SOURCE CONFLICT - FITTED TEETH ONLY"
+        },
+        {
+          "name": "AK700",
+          "ready": true,
+          "note": "Factory AK700 manual p38: main127T with13T/14T motor; tail120T with24T/25T. SELECT FITTED OPTION: manual does not establish one universal default. Exact127/13=9.76923077;127/14=9.07142857.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "28394107541e4b89",
+          "geometry": null,
+          "options": [
+            {
+              "label": "13T motor / 24T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                120,
+                24,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "13T motor / 25T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                120,
+                25,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "14T motor / 24T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                120,
+                24,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "14T motor / 25T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                120,
+                25,
+                1,
+                1
+              ],
+              "published_ratios": null
+            }
+          ],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "evidence": {
+            "file": "heli-catalog-research\\steam-2026-10-26\\ak700.pdf",
+            "sha256": "9493855eeecb7ace15f90dc031d6f9770df41287c9ffc6ed0828d48620064514",
+            "bytes": 23120194,
+            "page": 38,
+            "kind": "manufacturer_manual_mirror",
+            "source": "https://www.hubtech-rc.com/_downloads/09e03f42460cd2aa5b66e2974996d7d1"
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "AK700 PRO",
+          "ready": true,
+          "note": "Factory AK700 manual p38: main127T with13T/14T motor; tail120T with24T/25T. SELECT FITTED OPTION: manual does not establish one universal default. Exact127/13=9.76923077;127/14=9.07142857. PRO applicability is retailer-linked; confirm exact fitted parts, not manufacturer PRO-cover verification.",
+          "source": "https://www.helidirect.com/collections/steamrc-helicopter-kit",
+          "id": "040065312fdf623f",
+          "geometry": null,
+          "options": [
+            {
+              "label": "13T motor / 24T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                120,
+                24,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "13T motor / 25T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                120,
+                25,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "14T motor / 24T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                120,
+                24,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "14T motor / 25T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                120,
+                25,
+                1,
+                1
+              ],
+              "published_ratios": null
+            }
+          ],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "evidence": {
+            "file": "heli-catalog-research\\steam-2026-10-26\\ak700-pro-linked.pdf",
+            "sha256": "717f4683297ed73014422ff10bfe6aaadc21b97c4a91184452812fd0899b92d8",
+            "bytes": 15891345,
+            "page": 38,
+            "kind": "dealer_links_AK700_manual_for_PRO",
+            "source": "https://www.helidirect.com/products/ak700-pro-upgraded-helicopter-kit-w-o-blades"
+          },
+          "verified": false,
+          "verification_level": "dealer_reference",
+          "display_provenance": "DEALER-LINKED MANUAL OPTIONS"
+        },
+        {
+          "name": "Armor 700",
+          "ready": true,
+          "note": "Own factory version kit lists125/127/129T main and12/13/14T pinions. Factory Armor700 drive part H7050 explicitly95T front and19/20T rear gives5 or4.75. Select fitted combination. V3 factory permits ordered gearing; no stock assumed. NOT AK700120T tail.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "c5dd9326624e80aa",
+          "geometry": null,
+          "options": [
+            {
+              "label": "Fitted 125T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            }
+          ],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "evidence": {
+            "sources": [
+              {
+                "title": "新越Steam 舞者700直升机不含桨 H700K",
+                "url": "https://1krc.com/index.php/product/%e6%96%b0%e8%b6%8asteam-%e8%88%9e%e8%80%85700%e7%9b%b4%e5%8d%87%e6%9c%ba%e4%b8%8d%e5%90%ab%e6%a1%a8-h700k/",
+                "file": "product-8c575390989f.html",
+                "sha256": "0b38a17bcae6a1d464628857419854fe483fb45be642a51ac06642ae034d9066"
+              },
+              {
+                "title": "700电机斜齿14T  H7106",
+                "url": "https://1krc.com/index.php/product/700%e7%94%b5%e6%9c%ba%e6%96%9c%e9%bd%bf14t-h7106/",
+                "file": "product-0c869d9ece39.html",
+                "sha256": "01a7d0e7712de4b5c949387bae8865285fcfb08553818a052693d3758edc536e"
+              },
+              {
+                "title": "700尾驱动主齿轮组95T H7050",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e9%a9%b1%e5%8a%a8%e4%b8%bb%e9%bd%bf%e8%bd%ae%e7%bb%8495t-h7050/",
+                "file": "product-fa1de0b0f87c.html",
+                "sha256": "8c022c7938f2213deebf790f681395a9020b933f8d133a909df9fc420bc7e2c2"
+              },
+              {
+                "title": "700尾轴齿轮组20T H7079A",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e8%bd%b4%e9%bd%bf%e8%bd%ae%e7%bb%8420t-h7079a/",
+                "file": "product-52d3798bd21b.html",
+                "sha256": "1962a1ae815cdf09c7aac02e5c02a8c9fcdb13ca68f3687087bf9a3f74281b89"
+              },
+              {
+                "title": "700尾轴齿轮组19T H7079B",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e8%bd%b4%e9%bd%bf%e8%bd%ae%e7%bb%8419t-h7079b/",
+                "file": "product-fd04c878fa4c.html",
+                "sha256": "11f34ad28d46e7ef18be5a4ddd696da23ee0328a5ce1143aad62aa4985eb49a2"
+              }
+            ],
+            "kind": "manufacturer_exact_model_and_applicable_drive_parts",
+            "review": "Numerical specifications; no counts from pictures; actual fitted option selection required where stock is unspecified."
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "Armor 700 V2",
+          "ready": true,
+          "note": "Own factory version kit lists125/127/129T main and12/13/14T pinions. Factory Armor700 drive part H7050 explicitly95T front and19/20T rear gives5 or4.75. Select fitted combination. V3 factory permits ordered gearing; no stock assumed. NOT AK700120T tail.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "2fd88b01fb52805b",
+          "geometry": null,
+          "options": [
+            {
+              "label": "Fitted 125T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            }
+          ],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "evidence": {
+            "sources": [
+              {
+                "title": "舞者700V2直升机头罩版本 H700V2",
+                "url": "https://1krc.com/index.php/product/%e8%88%9e%e8%80%85700v2%e7%9b%b4%e5%8d%87%e6%9c%ba%e5%a4%b4%e7%bd%a9%e7%89%88%e6%9c%ac-h700v2/",
+                "file": "product-a77de27ca1ce.html",
+                "sha256": "df154e1879d9aabb2daa4f7d22f6e66c3997e2a9da6fe873054a25f354a0e50f"
+              },
+              {
+                "title": "700电机斜齿14T  H7106",
+                "url": "https://1krc.com/index.php/product/700%e7%94%b5%e6%9c%ba%e6%96%9c%e9%bd%bf14t-h7106/",
+                "file": "product-0c869d9ece39.html",
+                "sha256": "01a7d0e7712de4b5c949387bae8865285fcfb08553818a052693d3758edc536e"
+              },
+              {
+                "title": "700尾驱动主齿轮组95T H7050",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e9%a9%b1%e5%8a%a8%e4%b8%bb%e9%bd%bf%e8%bd%ae%e7%bb%8495t-h7050/",
+                "file": "product-fa1de0b0f87c.html",
+                "sha256": "8c022c7938f2213deebf790f681395a9020b933f8d133a909df9fc420bc7e2c2"
+              },
+              {
+                "title": "700尾轴齿轮组20T H7079A",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e8%bd%b4%e9%bd%bf%e8%bd%ae%e7%bb%8420t-h7079a/",
+                "file": "product-52d3798bd21b.html",
+                "sha256": "1962a1ae815cdf09c7aac02e5c02a8c9fcdb13ca68f3687087bf9a3f74281b89"
+              },
+              {
+                "title": "700尾轴齿轮组19T H7079B",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e8%bd%b4%e9%bd%bf%e8%bd%ae%e7%bb%8419t-h7079b/",
+                "file": "product-fd04c878fa4c.html",
+                "sha256": "11f34ad28d46e7ef18be5a4ddd696da23ee0328a5ce1143aad62aa4985eb49a2"
+              }
+            ],
+            "kind": "manufacturer_exact_model_and_applicable_drive_parts",
+            "review": "Numerical specifications; no counts from pictures; actual fitted option selection required where stock is unspecified."
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        },
+        {
+          "name": "Armor 700 V3",
+          "ready": true,
+          "note": "Own factory version kit lists125/127/129T main and12/13/14T pinions. Factory Armor700 drive part H7050 explicitly95T front and19/20T rear gives5 or4.75. Select fitted combination. V3 factory permits ordered gearing; no stock assumed. NOT AK700120T tail.",
+          "source": "https://steamrc.cn/index.php/about-us/manual/",
+          "id": "4d45af0b49579cdf",
+          "geometry": null,
+          "options": [
+            {
+              "label": "Fitted 125T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                125,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 125T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                125,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 127T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                127,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 12T motor / 19T tail",
+              "geometry": [
+                12,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 12T motor / 20T tail",
+              "geometry": [
+                12,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 13T motor / 19T tail",
+              "geometry": [
+                13,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 13T motor / 20T tail",
+              "geometry": [
+                13,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 14T motor / 19T tail",
+              "geometry": [
+                14,
+                129,
+                1,
+                1,
+                95,
+                19,
+                1,
+                1
+              ],
+              "published_ratios": null
+            },
+            {
+              "label": "Fitted 129T main / 14T motor / 20T tail",
+              "geometry": [
+                14,
+                129,
+                1,
+                1,
+                95,
+                20,
+                1,
+                1
+              ],
+              "published_ratios": null
+            }
+          ],
+          "input_type": "motor",
+          "links": [],
+          "published_ratios": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "evidence": {
+            "sources": [
+              {
+                "title": "700舞者V3直升机通用版本 H700V3",
+                "url": "https://1krc.com/index.php/product/700%e8%88%9e%e8%80%85v3%e7%9b%b4%e5%8d%87%e6%9c%ba%e9%80%9a%e7%94%a8%e7%89%88%e6%9c%ac-h700v3/",
+                "file": "product-471f4fbb7a66.html",
+                "sha256": "a71e6aa3b3647e22b3741e6c9e751e32547d5164eecdc40aae337b13cf7fa739"
+              },
+              {
+                "title": "700电机斜齿14T  H7106",
+                "url": "https://1krc.com/index.php/product/700%e7%94%b5%e6%9c%ba%e6%96%9c%e9%bd%bf14t-h7106/",
+                "file": "product-0c869d9ece39.html",
+                "sha256": "01a7d0e7712de4b5c949387bae8865285fcfb08553818a052693d3758edc536e"
+              },
+              {
+                "title": "700尾驱动主齿轮组95T H7050",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e9%a9%b1%e5%8a%a8%e4%b8%bb%e9%bd%bf%e8%bd%ae%e7%bb%8495t-h7050/",
+                "file": "product-fa1de0b0f87c.html",
+                "sha256": "8c022c7938f2213deebf790f681395a9020b933f8d133a909df9fc420bc7e2c2"
+              },
+              {
+                "title": "700尾轴齿轮组20T H7079A",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e8%bd%b4%e9%bd%bf%e8%bd%ae%e7%bb%8420t-h7079a/",
+                "file": "product-52d3798bd21b.html",
+                "sha256": "1962a1ae815cdf09c7aac02e5c02a8c9fcdb13ca68f3687087bf9a3f74281b89"
+              },
+              {
+                "title": "700尾轴齿轮组19T H7079B",
+                "url": "https://1krc.com/index.php/product/700%e5%b0%be%e8%bd%b4%e9%bd%bf%e8%bd%ae%e7%bb%8419t-h7079b/",
+                "file": "product-fd04c878fa4c.html",
+                "sha256": "11f34ad28d46e7ef18be5a4ddd696da23ee0328a5ce1143aad62aa4985eb49a2"
+              }
+            ],
+            "kind": "manufacturer_exact_model_and_applicable_drive_parts",
+            "review": "Numerical specifications; no counts from pictures; actual fitted option selection required where stock is unspecified."
+          },
+          "verified": true,
+          "verification_level": "manufacturer_documented",
+          "display_provenance": null
+        }
+      ]
     }
   ],
   "schema_version": 3,
-  "integration_version": "0.7.116"
+  "integration_version": "0.7.116",
+  "steam_addition": {
+    "date": "2026-10-26",
+    "entries": 14,
+    "verified": 10,
+    "notes": "13 of14 configurable. MK600DFC own manufacturer table conflict is explicitly shown and blocks defaults. 63 additional fitted configurations/defaults supplied for7 models.",
+    "dealer_reference": 3,
+    "manual_input": 1,
+    "source_conflicts": 1
+  },
+  "dealer_reference": 3
 }

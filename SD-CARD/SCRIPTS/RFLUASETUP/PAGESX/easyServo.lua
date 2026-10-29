@@ -124,11 +124,11 @@ return function(h)
   stop(read)
  end
  local function confirm(kind,value)modal={kind=kind,value=value,yes=false}end
- local function verify()
+ local function verify(beforeSave)
   state='VERIFYING FC...'
   h.servos().getServoConfigurations(function(_,got)
    for i in pairs(editedServo)do for _,key in ipairs(fields)do
-    if not got[i]or not got[i][key]or got[i][key].value~=draft[i][key].value then failed('SAVED / VERIFY MISMATCH');return end
+    if not got[i]or not got[i][key]or got[i][key].value~=draft[i][key].value then failed(beforeSave and'APPLY MISMATCH / NOT SAVED'or'EEPROM SENT / VERIFY MISMATCH');return end
    end end
    h.mixer().read(function(_,gotMix)
     for key in pairs(editedMix)do if gotMix[key].value~=mix[key].value then failed('SAVED / MIXER MISMATCH');return end end
@@ -136,6 +136,7 @@ return function(h)
      for i in pairs(editedInput)do for _,key in ipairs({'rate','min','max'})do
       if gotInput[i][key]~=inputs[i][key]then failed('SAVED / INPUT MISMATCH');return end
      end end
+     if beforeSave then queue(250,nil,function()verify(false)end,function()failed('APPLIED / EEPROM SAVE FAILED')end);return end
      draft=copy(got);inputs=gotInput;originalServo=copy(got);originalInputs=copy(gotInput);busy=false;dirty=false;editedServo={};editedMix={};editedInput={};state='SAVED / VERIFIED'
     end,function()failed('SAVED / INPUT VERIFY FAILED')end)
    end,nil,nil,function()failed('SAVED / VERIFY READ FAILED')end)
@@ -157,7 +158,7 @@ return function(h)
       for key in pairs(editedMix)do fresh[key].value=mix[key].value end
       h.mixer().write(fresh,function()
        local function writeInput(ix)
-        if ix>4 then queue(250,nil,verify,function()failed('APPLIED / EEPROM SAVE FAILED')end);return end
+        if ix>4 then verify(true);return end
         if not editedInput[ix]then writeInput(ix+1);return end
         local p={ix};local d=inputs[ix]
         for _,key in ipairs({'rate','min','max'})do rf2.mspHelper.writeU16(p,d[key])end
