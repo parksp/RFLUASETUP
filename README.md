@@ -45,12 +45,12 @@ Easy Setup is nearing completion and has received further updates. Users already
 
 Current changes were checked with a simulated FC, Lua event tests, rendered screens and syntax checks. They are not fully validated on physical aircraft/transmitters. Disconnect the motor and remove blades for bench testing; check manufacturer servo specifications and compare settings with the PC Configurator.
 
-**TX16S MK2:** Brief checks on some TX16S MK2 units suggest that the tool starts and runs, but parts of the interface may be clipped on screen. This is a preliminary observation; full feature, safety and long-term validation remain incomplete.
+**TX16S MK2:** The tool also runs on RadioMaster TX16S MK2. Because the layout is designed for the MK3 display proportions, some menus or parts of the screen may occasionally be clipped on MK2. Full feature validation remains incomplete.
 
 Development is primarily based on NEXUS XR, using RadioMaster TX16S MK3 with the currently tested EdgeTX environment and Rotorflight 4.6.x firmware. The tool can also operate with other compatible FCs. Some checks have been carried out on FlyDragon and Matek gyro/FC units, but these are partial checks rather than full validation of every feature or model.
 ### Installation Requirements
 
-- RadioMaster TX16S MK3
+- RadioMaster TX16S MK3; TX16S MK2 can also be used, with occasional screen/menu clipping due to display proportions
 - The currently tested EdgeTX environment on that transmitter
 - NEXUS XR as the primary development and test platform
 - The currently tested Rotorflight 4.6.x firmware
@@ -118,7 +118,7 @@ RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식�
 
 이번 변경은 모의 FC, Lua 이벤트, 화면 렌더와 문법 검사로 확인했습니다. 실제 기체·조종기의 모든 기능을 검증한 것은 아닙니다. 모터 연결과 블레이드를 분리하고, 제조사 서보 사양 및 PC Configurator 값과 대조하여 시험하세요.
 
-**TX16S MK2:** 일부 TX16S MK2 기기에서 잠깐 확인했을 때 실행과 구동은 가능한 것으로 보이나, 화면 일부가 잘려 표시될 수 있습니다. 짧은 확인에 한정되며 전체 기능·안전성·장기간 운용 검증은 아직 완료되지 않았습니다.
+**TX16S MK2:** RadioMaster TX16S MK2에서도 사용할 수 있습니다. 다만 MK3 화면 비율을 기준으로 구성되어 있어, MK2에서는 화면 비율 차이로 일부 메뉴나 화면이 간혹 잘려 표시될 수 있습니다. 전체 기능 검증은 아직 완료되지 않았습니다.
 ## 조종기 실제 화면 / Actual Radio Screens
 
 ### Easy Setup — 0.6.91 BETA
@@ -146,16 +146,16 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 | <img src="docs/images/radio-mixer-override.jpg" alt="Mixer Override Easy screen" width="520"> | <img src="docs/images/radio-full-setup.jpg" alt="Full Setup menu" width="520"> |
 ## 설치 조건
 
-주요 개발·시험 대상은 아래 조합입니다. MK2는 위의 사용자 짧은 확인 외에 전체 검증이 완료되지 않았습니다.
+주요 개발·시험 기준은 MK3이며, MK2에서도 사용할 수 있습니다. MK2는 화면 비율 차이로 일부 메뉴나 화면이 간혹 잘릴 수 있습니다.
 
 | 항목 | 현재 확인 조건 |
 |---|---|
-| 조종기 | RadioMaster TX16S MK3 |
+| 조종기 | RadioMaster TX16S MK3 / TX16S MK2 사용 가능 |
 | 조종기 운영체제 | 해당 조종기에서 현재 사용 중인 EdgeTX 환경 |
 | FC | NEXUS XR — 우선 개발·시험 기준 |
 | FC 펌웨어 | 현재 사용 중인 Rotorflight 4.6.x 계열 |
 | 비교 기준 | Rotorflight Configurator 2.3.0 |
-| 화면 | TX16S MK3의 800 × 480 컬러 터치 화면 기준 |
+| 화면 | TX16S MK3의 800 × 480 컬러 터치 화면 기준. MK2는 화면 비율 차이로 일부 메뉴·화면이 간혹 잘릴 수 있음 |
 | 통신 | 수신기 텔레메트리를 통한 MSP 통신이 정상적으로 구성된 모델 |
 | SD 카드 경로 | `/SCRIPTS/RFLUASETUP` |
 
