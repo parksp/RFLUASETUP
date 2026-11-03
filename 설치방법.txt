@@ -1,31 +1,29 @@
-RFLUASETUP 0.7.123 BETA - SERVO SAVE VERIFICATION
+RFLUASETUP 0.7.125 BETA — FAST SETUP GRAPHICS + RECEIVER
 
-0.7.122 기반 수정본입니다. SD-CARD 폴더 안의 SCRIPTS 내용을 조종기 SD 카드의
-SCRIPTS에 복사하여 기존 RFLUASETUP 폴더와 실행 스크립트를 교체하세요.
-실행 후 화면 하단이 0.7.123 BETA인지 확인하세요.
-PC에서 현재 FC 설정 백업을 보관한 후 설치하세요.
+0.7.124 기반 업데이트입니다. 3D 모델과 화면 속도를 개선했습니다.
 
-수정:
-- 센터/리버스/스와쉬 기본값: EEPROM 저장 전에 FC 실제 설정을 먼저 확인.
-- 저장 후에도 재검증. 일시적인 읽기 불일치는 읽기만 최대 3회 확인.
-- 서보 번호/필드/예상값/실제값 표시. 불일치를 정상 저장으로 처리하지 않음.
-- 기본값 저장 때 편집하지 않은 최신 FC 필드와 리버스/지오메트리 비트 보존.
-- 서보 읽기 커서 초기화 및 오래된 응답 격리. 오류 처리 가능한 서보 쓰기 재전송 제한.
-- 보드 정렬/ACC Trim: 쓰기 ACK와 저장 전 검증을 통과해야 EEPROM 저장.
-- 메인로터 방향/지오메트리/구형 Easy Servo에도 EEPROM 전 검증 추가.
+설치: ZIP의 SD-CARD 안 SCRIPTS 내용을 조종기 SD 카드의 SCRIPTS에 복사하세요.
+main.lua만 교체하지 마세요. 새 PAGESX/fastGraphics.lua도 필요합니다.
+하단 버전이 0.7.125 BETA인지 확인하세요. 이전 0.7.124 설치본은 보관하세요.
 
-확인 방법:
-Easy Setup > Servo/Swash > 2. Servo Reverse Setup / Servo Center Pulse Trim
-에서 기존과 동일하게 OVERRIDE ALL, 소량 조절, CENTER APPLY, CONFIRM & SAVE를 실행.
-정상 완료 문구: CENTER SAVED / VERIFIED
-문제가 계속되면 오류 문구와 하단 S1/S2/S3 필드의 예상값 -> 실제값을 알려주세요.
-예: S1 mid: 1535 -> 1500
+변경:
+1. RESET Z AXIS: 현재 Yaw를 0으로 잡고, 호버링할 때 기체 뒤에서 보는 정후방
+   시점으로 맞춥니다. 테일이 관찰자 쪽, 기수가 앞쪽입니다. 롤/피치 수신값은 유지합니다.
+   카메라의 상하 관찰 방향도 위에서 살짝 내려다보는 방향으로 수정했습니다.
+2. Receiver / Receiver Preview / Easy Receiver:
+   채널 바를 MSP105만으로 0.1초 간격 목표로 갱신합니다.
+   RSSI/아날로그 정보는 별도 MSP110으로 1초 간격 목표로 갱신합니다.
+   정상 Status 화면의 기존 텔레메트리와 채널 매핑/저장 기능은 유지합니다.
+3. Board & Sensor Alignment: 점 사각형 반복 대신 native 선/삼각형/원을 사용합니다.
+   시험 기준 그림 호출 599회 -> 46회 (92.3% 감소).
+4. Servo center: 서보 원과 색상 점을 native 원/채운 원으로 그립니다.
+5. Main Rotor Direction / Geometry / Tail:
+   같은 그림의 좌표와 그리기 명령을 재사용합니다. 목표값/방향/모드가 변하면 갱신합니다.
+   조작 버튼과 터치 영역은 매번 정상 구성하며, 캐시에 설정값 쓰기나 통신은 넣지 않습니다.
 
-APPLY MISMATCH / NOT SAVED: 이 저장 작업의 EEPROM 명령은 보내지 않음.
-EEPROM SENT / VERIFY FAILED: EEPROM 명령은 성공 응답을 받았으나 재검증 실패.
-이 경우 일부/전체 값이 저장됐을 수도 있으므로 PC에서 확인해야 합니다.
-NOT SAVED는 FC RAM의 임시 적용까지 취소되었다는 뜻은 아닙니다.
+193개 Lua 문법, 서보 저장·오버라이드·방향 보존·테일·지오메트리 회귀,
+Receiver 100ms 요청/RSSI 분리, RESET Z, 화면 범위와 캐시 검사 통과.
+사용자로부터 반응 속도 개선 확인을 받았습니다. 전체 기능 검증 완료를 뜻하지는 않습니다.
+0.7.124의 속도 개선은 사용자 확인을 받았고, 별도 Full Setup 감사 문제 9개는 미해결입니다.
 
-실제 조종기/FC에서는 아직 검증하지 않았습니다. 펌웨어 버전도 아직 확인되지 않았습니다.
-191 Lua 컴파일 및 모의 FC의 정상/실패/불일치/ARM/리버스 보존 검사를 통과했습니다.
-이전 Full Setup 감사의 별도 미해결 항목은 AUDIT-0.7.123.md에 기록했습니다.
+Easy Setup은 이제 거의 마무리 단계이며, 추가 업데이트를 적용했습니다. 기존 Rotorflight 사용자라면 현재 Easy Setup 흐름으로 원하는 기체 설정에 상당히 근접할 수 있을 것으로 기대합니다.

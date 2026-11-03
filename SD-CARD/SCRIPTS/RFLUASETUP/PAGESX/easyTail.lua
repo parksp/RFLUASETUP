@@ -1,5 +1,6 @@
 -- Dedicated tail setup: draft edits, fresh-block merge, verified EEPROM save.
 return function(h)
+ if h.fastGraphics then h.fastGraphics(h)end
  local M={};local view='menu';local focus=1;local controls={};local cfg,inputs,servos={},{},{}
  local draft={};local selected=3;local ready,busy,over,drag=false,false,false,false
  local editing=nil;local increments={1,10,.1};local incrementIndex=1;local held=nil;local heldAt=0;local heldOpened=false
@@ -212,7 +213,7 @@ return function(h)
     btn('tail1520','1520 us / DEFAULTS',30,147,350,35,action('pulse',1520));btn('tail760','760 us / DEFAULTS',420,147,350,35,action('pulse',760))
     for n,r in ipairs({{'mid','Center pulse [us]',50,2250},{'rate','Update rate [Hz]',50,5000},{'min','Minimum offset [us]',-1000,1000},{'max','Maximum offset [us]',-1000,1000},{'scaleNeg','Negative scale',100,1000},{'scalePos','Positive scale',100,1000},{'speed','Speed [ms]',0,60000}})do local col=(n-1)%2;local row=math.floor((n-1)/2);number(r[1],r[2],25+col*390,195+row*48,r[3],r[4],false)end
    end
-  else picture()
+  else if h.picture then h.picture('tail',tostring(over)..':'..target..':'..mode(),picture)else picture()end
    btn('tailoverride',over and'OVERRIDE ON'or'OVERRIDE OFF',25,156,155,38,action('override'))
    btn('tailminus22',mode()==0 and'-22 deg'or'-22 %',25,207,72,36,action('preset',-22));btn('tailplus22',mode()==0 and'+22 deg'or'+22 %',104,207,72,36,action('preset',22))
    btn('tailcw','CW',255,149,65,34,action('preset',-val('cw')));btn('tailcenter','CENTER',328,149,86,34,action('preset',0));btn('tailccw','CCW',422,149,65,34,action('preset',val('ccw')))

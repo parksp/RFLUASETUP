@@ -1,5 +1,6 @@
 -- Illustrated Main Rotor settings. Selection is a draft; only Save writes the FC.
 return function(h)
+ if h.fastGraphics then h.fastGraphics(h)end
  local M={}
  local tab,focus,modal=1,1,nil
  local ready,busy,dirty=false,false,false
@@ -72,6 +73,7 @@ return function(h)
  local function value(key)if edit[key]~=nil then return edit[key]end;if type(key)=='number'then local d=inputs[key];return d and(d.rate<0 and -1 or 1)end;return cfg[key]and cfg[key].value end
  local function line(x,y,x2,y2,c)h.line(x,y,x2,y2,c or'text')end
  local function ellipse(x,y,rx,ry,c)
+  if h.ellipse then h.ellipse(x,y,rx,ry,c);return end
   local px,py=x+rx,y;for i=1,32 do local a=i*math.pi/16;local nx,ny=x+math.cos(a)*rx,y+math.sin(a)*ry;line(px,py,nx,ny,c);px,py=nx,ny end
  end
  local function arrow(x,y,x2,y2,c)
@@ -150,13 +152,13 @@ return function(h)
   for i,n in ipairs({'SWASH','ROTOR','AILERON','ELEVATOR','COLLECTIVE'})do btn('emtab'..i,n,20+(i-1)*153,94,148,36,'tab',i,tab==i)end
   if not ready then h.txt(30,190,state,'orange',true)
   elseif tab==1 then
-   for i=0,6 do local x=20+(i%4)*193;local y=145+math.floor(i/4)*115;local v=value('swash_type');btn('ems'..i,'',x,y,185,108,'swash',i,v==i);swash(x+92,y+49,i);h.txt(x+9,y+85,names[i+1],v==i and'orange'or'text')end
+   for i=0,6 do local x=20+(i%4)*193;local y=145+math.floor(i/4)*115;local v=value('swash_type');btn('ems'..i,'',x,y,185,108,'swash',i,v==i);if h.picture then h.picture('swash'..i,i,function()swash(x+92,y+49,i)end)else swash(x+92,y+49,i)end;h.txt(x+9,y+85,names[i+1],v==i and'orange'or'text')end
    h.txt(603,278,'TOP VIEW','cyan');h.txt(603,301,'FRONT = ARROW','muted');h.txt(603,325,'SCHEMATIC','muted');h.txt(26,384,'Choose the linkage layout specified by the helicopter manufacturer.','muted')
   elseif tab==2 then
-   for i=0,1 do local x=35+i*385;btn('emrot'..i,'',x,150,350,226,'rotor',i,value('main_rotor_dir')==i);rotor(x+175,248,i==1);h.txt(x+37,345,i==0 and'CLOCKWISE (CW)'or'COUNTERCLOCKWISE (CCW)','text',true)end
+   for i=0,1 do local x=35+i*385;btn('emrot'..i,'',x,150,350,226,'rotor',i,value('main_rotor_dir')==i);if h.picture then h.picture('rotor'..i,i,function()rotor(x+175,248,i==1)end)else rotor(x+175,248,i==1)end;h.txt(x+37,345,i==0 and'CLOCKWISE (CW)'or'COUNTERCLOCKWISE (CCW)','text',true)end
    h.txt(30,384,'Rotation direction viewed from ABOVE the main rotor.','cyan')
   else
-   local axis=axes[tab];diagram(axis)
+   local axis=axes[tab];if h.picture then h.picture('direction',axis,function()diagram(axis)end)else diagram(axis)end
    h.txt(28,322,axis==4 and'Collective uses the TX stick; do not tilt the helicopter for this check.'or'Keep sticks centered. Tilt the aircraft and observe the opposite correction.','muted')
    btn('emnormal','NORMAL',200,350,185,38,'direction',1,value(axis)==1);btn('emreverse','REVERSE',405,350,185,38,'direction',-1,value(axis)==-1)
   end

@@ -1,6 +1,7 @@
 -- Main rotor geometry: one ruler edits exactly one selected parameter.
 -- Calibration is live in FC RAM. EEPROM is written only by Apply & Save.
 return function(h)
+ if h.fastGraphics then h.fastGraphics(h)end
  local M={}
  local axis,field,focus=1,'angle',1
  local rollFront=false
@@ -284,9 +285,11 @@ return function(h)
  local function line(x,y,x2,y2,c)h.line(x,y,x2,y2,c or'text')end
  local function path(cx,cy,pts,c)for i=1,#pts-1 do local a,b=pts[i],pts[i+1];line(cx+a[1],cy+a[2],cx+b[1],cy+b[2],c)end end
  local function ellipse(x,y,rx,ry,c,tilt)
+  if h.ellipse then h.ellipse(x,y,rx,ry,c,tilt);return end
   local ca,sa=math.cos(tilt or 0),math.sin(tilt or 0);local px,py=x+rx*ca,y+rx*sa
   for i=1,32 do local a=i*math.pi/16;local dx,dy=math.cos(a)*rx,math.sin(a)*ry;local nx,ny=x+dx*ca-dy*sa,y+dx*sa+dy*ca;line(px,py,nx,ny,c);px,py=nx,ny end
  end
+ local circleUnit={};for i=0,32 do local a=i*math.pi/16;circleUnit[i]={math.cos(a),math.sin(a)}end
  local function helicopter()
   local side=axis==2;local x,y=230,185
   local baseLine,basePath,baseEllipse=line,path,ellipse
@@ -296,7 +299,7 @@ return function(h)
   local function line(a,b,c,d,color)baseLine(mx(a),my(b),mx(c),my(d),color)end
   local function path(cx,cy,pts,color)local p={};for i,v in ipairs(pts)do p[i]={v[1]*scaleX,v[2]*1.5}end;basePath(mx(cx),my(cy),p,color)end
   local function ellipse(cx,cy,rx,ry,color,t)
-   local pts={};for i=0,32 do local a=i*math.pi/16;local dx,dy=math.cos(a)*rx,math.sin(a)*ry;pts[#pts+1]={dx*math.cos(t or 0)-dy*math.sin(t or 0),dx*math.sin(t or 0)+dy*math.cos(t or 0)}end;path(cx,cy,pts,color)
+   local pts={};local ca,sa=math.cos(t or 0),math.sin(t or 0);for i=0,32 do local u=circleUnit[i];local dx,dy=u[1]*rx,u[2]*ry;pts[#pts+1]={dx*ca-dy*sa,dx*sa+dy*ca}end;path(cx,cy,pts,color)
   end
   do
    local baseLine,basePath,baseEllipse=line,path,ellipse
@@ -357,7 +360,7 @@ return function(h)
   controls={};h.header('SERVO / SWASH 4 / MAIN ROTOR GEOMETRY',saving and'SAVING...'or stopping and'OFF...'or not ready and'READING...'or(over and'ALL ON'or'ALL OFF'))
   btn('APPLY & SAVE',592,59,151,29,'save')
   for n,i in ipairs({1,2,4,5})do btn(names[i],20+(n-1)*151,95,143,36,'axis',i,axis==i)end
-  h.fill(20,143,598,295,'panel2');h.box(20,143,598,295,'line');helicopter()
+  h.fill(20,143,598,295,'panel2');h.box(20,143,598,295,'line');if h.picture then h.picture('geometry',table.concat({axis,tostring(over),angles[axis]or 0,tostring(rollFront),values.trimRoll or 0,values.trimCollective or 0},':'),helicopter)else helicopter()end
   h.txt(24,173,'OVERRIDE ALL','cyan')
   btn(blocked and'RETRY OFF'or'ON / OFF',24,190,112,28,'all',nil,over and not blocked)
   if axis~=5 then

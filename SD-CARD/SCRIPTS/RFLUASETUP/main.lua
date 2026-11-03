@@ -1,5 +1,5 @@
 -- RF SETUP HELI 0.2.0 - reviewed UI shell for TX16S / EdgeTX
-local VERSION="0.7.123 BETA"
+local VERSION="0.7.125 BETA"
 local page="home"
 local selected=1
 local scroll=1
@@ -867,7 +867,61 @@ end
 function statusFinish()
  statusLiveBusy=false;statusLive.state='LIVE'
 end
+statusAttitudeAt=-1000
+statusAttitudeError=nil
+function rfRequestAttitude()
+ if not rfReady or statusLiveBusy or not rf2.mspQueue:isProcessed()then return end
+ statusLiveBusy=true
+ rf2.mspQueue:add({command=108,isolateReply=true,maxAttempts=1,replyTimeout=1.2,
+  processReply=function(_,b)
+   statusLiveBusy=false
+   if #b~=6 then statusAttitudeError='ATTITUDE DATA ERROR';return end
+   for j=1,6 do if type(b[j])~='number'or b[j]<0 or b[j]>255 or b[j]~=math.floor(b[j])then statusAttitudeError='ATTITUDE DATA ERROR';return end end
+   b.offset=1;statusLive.roll=rf2.mspHelper.readS16(b)/10;statusLive.pitch=-rf2.mspHelper.readS16(b)/10;statusLive.yaw=-rf2.mspHelper.readS16(b)
+   statusAttitudeAt=getTime and getTime()or 0;statusAttitudeError=nil;statusLive.state='LIVE'
+  end,
+  errorHandler=function()statusLiveBusy=false;statusAttitudeError='ATTITUDE READ ERROR'end
+ })
+end
+function rfAttitudeState()
+ if statusAttitudeError then return statusAttitudeError end
+ if (getTime and getTime()or 0)-statusAttitudeAt>100 then return'ATTITUDE STALE'end
+ return'LIVE'
+end
+statusReceiverSlowAt=-1000
+function rfRequestReceiverMeta()
+ if not rfReady or statusLiveBusy or not rf2.mspQueue:isProcessed()then return end
+ statusReceiverSlowAt=getTime and getTime()or 0;statusLiveBusy=true
+ rf2.mspQueue:add({command=110,isolateReply=true,maxAttempts=1,replyTimeout=1.2,
+  processReply=function(_,b)
+   statusLiveBusy=false
+   if #b<7 then return end
+   for j=1,7 do if type(b[j])~='number'or b[j]<0 or b[j]>255 or b[j]~=math.floor(b[j])then return end end
+   local function u16(n)return b[n]+256*b[n+1]end
+   statusLive.voltage=b[1]/10;statusLive.mah=u16(2);statusLive.rssi=u16(4);local a=u16(6);if a>=32768 then a=a-65536 end;statusLive.current=a/100
+  end,errorHandler=function()statusLiveBusy=false end
+ })
+end
+statusReceiverAt=-1000
+function rfRequestReceiverLive()
+ if not rfReady or statusLiveBusy or not rf2.mspQueue:isProcessed()then return end
+ statusLiveBusy=true
+ rf2.mspQueue:add({command=105,isolateReply=true,maxAttempts=1,replyTimeout=1.2,
+  processReply=function(_,b)
+   statusLiveBusy=false
+   if #b<10 or #b%2~=0 or #b>64 then statusLive.state='RX DATA ERROR';return end
+   for j=1,#b do if type(b[j])~='number'or b[j]<0 or b[j]>255 or b[j]~=math.floor(b[j])then statusLive.state='RX DATA ERROR';return end end
+   local n=math.min(16,#b/2);b.offset=1
+   for j=1,n do statusLive.rx[j]=rf2.mspHelper.readU16(b)end
+   for j=n+1,16 do statusLive.rx[j]=1500 end
+   statusReceiverAt=getTime and getTime()or 0;statusLive.state='LIVE'
+  end,
+  errorHandler=function()statusLiveBusy=false;statusLive.state='RX READ ERROR'end
+ })
+end
 function requestStatusLive()
+ if page=='receiver'or page=='receiverPreview'or page=='easyReceiver'then rfRequestReceiverLive();return end
+ if page=='statusAttitude'or page=='configuration3d'then rfRequestAttitude();return end
  if not rfReady or statusLiveBusy or not rf2.mspQueue:isProcessed()then return end
  statusLiveBusy=true;statusLive.state='UPDATING';local pending=5
  local function done()pending=pending-1;if pending<=0 then statusFinish()end end
@@ -893,22 +947,19 @@ end
 function statusAngleDelta(a,b)
  local d=(a or 0)-(b or 0);while d>180 do d=d-360 end;while d<-180 do d=d+360 end;return d
 end
+rfAttitudeMesh=nil
+statusHeliViewYaw=nil
 function drawStatusHeli(cx,cy,viewScale)
- local rr=(statusLive.roll or 0)*math.pi/180;local pr=-(statusLive.pitch or 0)*math.pi/180;local yr=-statusAngleDelta(statusLive.yaw,statusYawOffset)*math.pi/180;local cr,sr=math.cos(rr),math.sin(rr);local cp,sp=math.cos(pr),math.sin(pr);local viewYaw=math.pi-yr;local cyr,syr=math.cos(viewYaw),math.sin(viewYaw)
- local lines={}
- local function pt(x,y,z)local scale=viewScale or 1;x=(x+33)*scale;y=y*scale;z=z*scale;local y1=y*cr-z*sr;local z1=y*sr+z*cr;local x2=x*cp+z1*sp;local z2=-x*sp+z1*cp;local x3=x2*cyr-y1*syr;local y3=x2*syr+y1*cyr;return cx+y3*.72,cy-z2*.72,x3 end
- local function seg(a,b,color,size)local x1,y1,d1=pt(a[1],a[2],a[3]or 0);local x2,y2,d2=pt(b[1],b[2],b[3]or 0);lines[#lines+1]={x1,y1,x2,y2,color,size,(d1+d2)*.5}end
- seg({-125,0,0},{55,0,0},'text',5)
- seg({-48,-22,0},{36,-20,0},'cyan',6);seg({36,-20,0},{58,0,0},'cyan',6);seg({58,0,0},{36,20,0},'cyan',6);seg({36,20,0},{-48,22,0},'cyan',6);seg({-48,22,0},{-65,0,0},'cyan',6);seg({-65,0,0},{-48,-22,0},'cyan',6)
- seg({-20,-13,9},{31,-12,9},'blue',6);seg({31,-12,9},{46,0,9},'blue',6);seg({46,0,9},{31,12,9},'blue',6);seg({31,12,9},{-20,13,9},'blue',6)
- seg({-20,-13,9},{-48,-22,0},'purple',3);seg({-20,13,9},{-48,22,0},'purple',3);seg({31,-12,9},{36,-20,0},'purple',3);seg({31,12,9},{36,20,0},'purple',3);seg({46,0,9},{58,0,0},'orange',5)
- seg({0,0,9},{0,0,27},'red',6);local rp={102,0,27};for i=1,20 do local a=i*math.pi*2/20;local rn={math.cos(a)*102,math.sin(a)*102,27};seg(rp,rn,'red',2);rp=rn end;seg({-72,-72,27},{72,72,27},'red',5);seg({-72,72,27},{72,-72,27},'red',5)
- seg({-38,-22,-7},{-45,-32,-22},'text',4);seg({28,-22,-7},{38,-32,-22},'text',4);seg({-58,-32,-22},{57,-32,-22},'text',5);seg({-38,22,-7},{-45,32,-22},'text',4);seg({28,22,-7},{38,32,-22},'text',4);seg({-58,32,-22},{57,32,-22},'text',5)
- seg({-112,0,-2},{-126,0,24},'cyan',5);seg({-126,0,24},{-126,0,-5},'cyan',5);seg({-118,0,0},{-118,-34,0},'purple',4);local trp={-94,-34,0};for i=1,16 do local a=i*math.pi*2/16;local trn={-118+math.cos(a)*24,-34,math.sin(a)*24};seg(trp,trn,'orange',2);trp=trn end;seg({-135,-34,-17},{-101,-34,17},'orange',5);seg({-135,-34,17},{-101,-34,-17},'orange',5)
- table.sort(lines,function(a,b)return a[7]<b[7]end);for i=1,#lines do local l=lines[i];statusDotLine(l[1],l[2],l[3],l[4],l[5],l[6])end
+ if not rfAttitudeMesh then
+  rfAttitudeMesh=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/attitudeHeli.lua'))()({
+   line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
+   triangle=lcd.drawFilledTriangle and function(x1,y1,x2,y2,x3,y3,c)lcd.drawFilledTriangle(sx(x1),sy(y1),sx(x2),sy(y2),sx(x3),sy(y3),col(c))end or nil
+  })
+ end
+ rfAttitudeMesh.draw(cx,cy,viewScale,statusLive.roll,statusLive.pitch,statusLive.yaw,statusYawOffset,statusHeliViewYaw)
 end
 function statusResetZ()
- statusYawOffset=statusLive.yaw or 0;statusLive.state='Z AXIS OFFSET RESET'
+ statusYawOffset=statusLive.yaw or 0;statusHeliViewYaw=math.pi;statusLive.state='Z AXIS OFFSET RESET'
 end
 function drawStatus()
  header('STATUS',statusLive.state)
@@ -930,7 +981,7 @@ function drawStatusInstrument()
  button('instBack','< STATUS',600,397,180,42,false,{kind='statusInstrumentBack'},'cyan');footer('Live instrument data from Rotorflight FC.')
 end
 function drawStatusAttitude()
- header('ATTITUDE','LIVE')
+ header('ATTITUDE',rfAttitudeState())
  statusCard(20,100,760,286,'3D HELICOPTER ATTITUDE','purple');drawStatusHeli(400,250,1.35)
  fill(38,142,190,76,'panel');box(38,142,190,76,'line');txt(52,158,string.format('ROLL  %+.1f deg',statusLive.roll or 0),'cyan',true);txt(52,187,string.format('PITCH %+.1f deg',statusLive.pitch or 0),'orange',true);fill(610,142,150,48,'panel');box(610,142,150,48,'line');txt(625,158,string.format('YAW %+.0f deg',statusAngleDelta(statusLive.yaw,statusYawOffset)),'green',true)
  button('resetZ','RESET Z AXIS',390,390,190,42,false,{kind='statusResetZ'},'orange');button('attBack',attitudeBackPage=='configuration'and'< CONFIG'or(attitudeBackPage=='receiver'and'< RECEIVER'or(attitudeBackPage=='easyBoardMenu'and'< CLOSE'or'< STATUS')),600,390,180,42,false,{kind='statusAttitudeBack'},'cyan');footer('RESET Z: sets the current heading to 0 deg without reversing the model.')
@@ -1027,7 +1078,7 @@ function rxFunctionPwm(fn)return statusLive.rx[fn]or(fn==5 and 1000 or 1500)end
 function rxChannelPwm(ch)return rxFunctionPwm(rxAssigned(ch))end
 function rxStickPct(fn)local cen=rxRc.center or 1500;local def=math.max(1,rxRc.deflection or 500);return math.max(-100,math.min(100,(rxFunctionPwm(fn)-cen)*100/def))end
 function drawReceiverPreview()
- header('RECEIVER STICK PREVIEW','LIVE')
+ header('RECEIVER STICK PREVIEW',(statusLive.state=='LIVE'and(getTime and getTime()or 0)-statusReceiverAt<=100)and'LIVE'or'RX DATA STALE')
  local rr,pp,yy,cc=rxStickPct(1)-(rxPreviewZero[1]or 0),rxStickPct(2)-(rxPreviewZero[2]or 0),rxStickPct(3)-(rxPreviewZero[3]or 0),rxStickPct(4)-(rxPreviewZero[4]or 0);local orr,opp,oy=statusLive.roll,statusLive.pitch,statusLive.yaw;statusLive.roll=rr*.28;statusLive.pitch=pp*.28;statusLive.yaw=(statusYawOffset or 0)+yy*.9;statusCard(20,100,760,286,'TRANSMITTER CONTROLLED HELICOPTER','green');drawStatusHeli(400,248,1.35);statusLive.roll,statusLive.pitch,statusLive.yaw=orr,opp,oy
  local vals={{'ROLL',rr,'cyan'},{'PITCH',pp,'orange'},{'YAW',yy,'green'},{'COL',cc,'purple'}};for i,v in ipairs(vals)do local x=36+(i-1)*185;txt(x,342,v[1]..' '..string.format('%+.0f%%',v[2]),v[3],true);fill(x,365,160,10,'bg');fill(x,365,160*(v[2]+100)/200,10,v[3]);fill(x+79,360,2,20,'text');box(x,365,160,10,'line')end
  button('rxPreviewReset','RESET',400,398,180,40,false,{kind='rxPreviewReset'},'orange');button('rxPreviewBack','< RECEIVER',600,398,180,40,false,{kind='rxPreviewBack'},'cyan');footer('RESET uses the current stick positions as the center reference.')
@@ -1204,7 +1255,7 @@ cfg3dRows={{'Board Roll [deg]','alignRoll',-180,360},{'Board Pitch [deg]','align
 cfg3dSel=1;cfg3dScroll=1
 function cfg3dActivate(i)local r=cfg3dRows[i];if not r then return end;cfg3dSel=i;beginNumber('config',r[2],cfgValue(r[2]),r[3],r[4])end
 function drawConfiguration3d()
- header('ALIGNMENT & 3D HELICOPTER',cfgState);statusCard(20,100,760,158,'LIVE ATTITUDE','purple');drawStatusHeli(400,188,0.82);txt(40,226,string.format('ROLL %+.1f  PITCH %+.1f',statusLive.roll or 0,statusLive.pitch or 0),'cyan');txt(610,226,string.format('YAW %+.0f',statusAngleDelta(statusLive.yaw,statusYawOffset)),'green')
+ header('ALIGNMENT & 3D HELICOPTER',cfgState);statusCard(20,100,760,158,'LIVE ATTITUDE','purple');drawStatusHeli(400,180,0.70);txt(40,226,string.format('ROLL %+.1f  PITCH %+.1f',statusLive.roll or 0,statusLive.pitch or 0),'cyan');txt(610,226,string.format('YAW %+.0f',statusAngleDelta(statusLive.yaw,statusYawOffset)),'green')
  local visible=2;if cfg3dSel<cfg3dScroll then cfg3dScroll=cfg3dSel elseif cfg3dSel>=cfg3dScroll+visible then cfg3dScroll=cfg3dSel-visible+1 end;cfg3dScroll=math.max(1,math.min(#cfg3dRows-visible+1,cfg3dScroll));local y=270
  for i=cfg3dScroll,math.min(#cfg3dRows,cfg3dScroll+visible-1)do local r=cfg3dRows[i];fill(20,y,700,42,cfg3dSel==i and'panel2'or'panel');box(20,y,700,42,cfg3dSel==i and'cyan'or'line');txt(34,y+13,r[1],cfg3dSel==i and'cyan'or'text');button('cfg3dRow'..i,tostring(cfgValue(r[2])),540,y+5,165,32,cfg3dSel==i,{kind='cfg3dRow',index=i},'cyan');y=y+47 end
  button('cfg3dUp','^',738,270,42,36,false,{kind='cfg3dScroll',delta=-1},'cyan');fill(753,310,12,54,'line');local ty=310+math.floor(30*(cfg3dScroll-1)/math.max(1,#cfg3dRows-visible));fill(748,ty,22,24,'cyan');button('cfg3dDown','v',738,368,42,36,false,{kind='cfg3dScroll',delta=1},'cyan');button('cfg3dReset','RESET Z',420,411,160,34,false,{kind='statusResetZ'},'orange');button('cfg3dBack','< CONFIG',600,411,180,34,false,{kind='cfg3dBack'},'cyan');footer('Enter Board Roll/Pitch/Yaw while watching the live helicopter.')
@@ -1278,12 +1329,19 @@ function easySave()
   for _,k in ipairs({'roll','pitch','yaw'})do if rf2.mspHelper.readS16(b)~=target[k]then return false end end;return true
  end,function()cfgAlign=target;easyDirty=easyDraft.roll~=target.roll or easyDraft.pitch~=target.pitch or easyDraft.yaw~=target.yaw;easyState=easyDirty and'SAVED / NEW DRAFT NOT SAVED'or'ALIGNMENT SAVED / VERIFIED'end)
 end
-function easyLine(x1,y1,x2,y2,c,w)if statusDotLine then statusDotLine(x1,y1,x2,y2,c,w or 3)elseif lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end
+function easyLine(x1,y1,x2,y2,c,w)
+ if lcd.drawFilledTriangle and(w or 3)>1 then
+  local dx,dy=x2-x1,y2-y1;local len=math.sqrt(dx*dx+dy*dy)
+  if len==0 then return end;local ox,oy=-dy/len*(w or 3)/2,dx/len*(w or 3)/2
+  lcd.drawFilledTriangle(sx(x1+ox),sy(y1+oy),sx(x2+ox),sy(y2+oy),sx(x2-ox),sy(y2-oy),col(c))
+  lcd.drawFilledTriangle(sx(x1+ox),sy(y1+oy),sx(x2-ox),sy(y2-oy),sx(x1-ox),sy(y1-oy),col(c))
+ elseif lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end
+end
 function drawEasyHeli()
  local cx,cy=258,238
  -- clean top-view helicopter: rounded nose, circular main/tail rotors
  txt(cx-46,cy-153,'HELI FRONT','orange',true)
- local function easyCircle(ox,oy,rad,color,width)local px,py=ox+rad,oy;for i=1,32 do local a=i*math.pi*2/32;local nx,ny=ox+math.cos(a)*rad,oy+math.sin(a)*rad;easyLine(px,py,nx,ny,color,width or 2);px,py=nx,ny end end
+ local function easyCircle(ox,oy,rad,color,width)if lcd.drawCircle and sx(rad)==sy(rad)then lcd.drawCircle(sx(ox),sy(oy),sx(rad),col(color));return end;local px,py=ox+rad,oy;for i=1,32 do local a=i*math.pi*2/32;local nx,ny=ox+math.cos(a)*rad,oy+math.sin(a)*rad;easyLine(px,py,nx,ny,color,width or 2);px,py=nx,ny end end
  -- main rotor disc and mast
  easyCircle(cx,cy-30,74,'text',2);easyLine(cx-70,cy-30,cx+70,cy-30,'text',5);easyLine(cx,cy-100,cx,cy+40,'text',5);easyCircle(cx,cy-30,7,'cyan',3)
  -- rounded canopy and fuselage
@@ -1310,7 +1368,7 @@ function drawEasy()
 end
 function drawEasyReceiver()
  header('EASY SETUP  2/12','RECEIVER CHECK / READ ONLY')
- local pi=rxProtocolIndex();local proto=(rxProtocols[pi]and rxProtocols[pi][1])or'UNKNOWN';local telem=bit32.btest(rxFeature,bit32.lshift(1,10));local linked=rfReady and statusLive.state~='WAITING FC';local sensors=rxSensorTotal();local lo=(rxRc.center or 1500)-(rxRc.deflection or 500);local hi=(rxRc.center or 1500)+(rxRc.deflection or 500)
+ local pi=rxProtocolIndex();local proto=(rxProtocols[pi]and rxProtocols[pi][1])or'UNKNOWN';local telem=bit32.btest(rxFeature,bit32.lshift(1,10));local linked=rfReady and statusLive.state=='LIVE'and(getTime and getTime()or 0)-statusReceiverAt<=100;local sensors=rxSensorTotal();local lo=(rxRc.center or 1500)-(rxRc.deflection or 500);local hi=(rxRc.center or 1500)+(rxRc.deflection or 500)
  fill(20,94,760,70,'panel2');box(20,94,760,70,'line');txt(36,106,'PROTOCOL','muted');txt(36,130,proto,'cyan',true);txt(278,106,'TELEMETRY','muted');txt(278,130,telem and('ON / '..sensors..' SENSORS')or'OFF',telem and'green'or'orange',true);txt(570,106,'FC LINK','muted');txt(570,130,linked and'LIVE'or'WAIT',linked and'green'or'orange',true)
  fill(20,170,760,42,'panel');box(20,170,760,42,'line');txt(36,184,string.format('CENTER %d us',rxRc.center or 1500),'cyan',true);txt(262,184,string.format('EXPECTED %d - %d us',lo,hi),'text',true);txt(610,184,'RSSI '..rxRssiText(),'orange',true)
  txt(30,220,'INPUT','muted',true);txt(106,220,'ASSIGNMENT / LIVE RANGE','muted',true);txt(650,220,'PWM','muted',true)
@@ -1607,7 +1665,8 @@ local function run(event,touch)
  if advanced and(page=='rates'or page=='profiles'or page=='modes'or page=='adjustments'or page=='beeper'or page=='sensors'or page=='blackbox')then advanced.live()end
  if advanced and(page=='rates'or page=='profiles'or page=='modes'or page=='adjustments'or page=='beeper'or page=='sensors'or page=='blackbox')and not numEdit and not choiceSelect and not help then event=advanced.event(event)or event end
  if page=='home'and rfReady then local now=getTime and getTime()or 0;if now-homeHwAt>=100 and not homeHwBusy and rf2.mspQueue:isProcessed()then homeHwAt=now;requestHomeHardware()end end
-  if(page=='status'or page=='receiver'or page=='receiverPreview'or page=='statusAttitude'or page=='statusInstrument'or page=='configuration3d'or page=='easyTrim'or page=='easyReceiver')and rfReady then local now=getTime and getTime()or 0;if now-statusLiveAt>=20 and not statusLiveBusy and rf2.mspQueue:isProcessed()then statusLiveAt=now;requestStatusLive()end end
+  if(page=='status'or page=='receiver'or page=='receiverPreview'or page=='statusAttitude'or page=='statusInstrument'or page=='configuration3d'or page=='easyTrim'or page=='easyReceiver')and rfReady then local now=getTime and getTime()or 0;if now-statusLiveAt>=((page=='receiver'or page=='receiverPreview'or page=='easyReceiver')and 10 or 20)and not statusLiveBusy and rf2.mspQueue:isProcessed()then statusLiveAt=now;requestStatusLive()end end
+ if(page=='receiver'or page=='receiverPreview'or page=='easyReceiver')and rfReady then local now=getTime and getTime()or 0;if now-statusReceiverSlowAt>=100 and not statusLiveBusy and rf2.mspQueue:isProcessed()then rfRequestReceiverMeta()end end
  if page=='power'and rfReady then local now=getTime and getTime()or 0;if now-pwLiveAt>=20 and not pwLiveBusy and rf2.mspQueue:isProcessed()then pwLiveAt=now;pwReadLive()end end
  if page=='governor'and rfReady then local now=getTime and getTime()or 0;if now-govRxAt>=10 and rf2.mspQueue:isProcessed()then govRxAt=now;rfGovReadThrottle()end end
  if page=='governor'and rfReady and not govDirty and not govCurveEdit and govCurveDrag==nil and not numEdit and not choiceSelect then local now=getTime and getTime()or 0;if now-govLiveReadAt>=100 and rf2.mspQueue:isProcessed()then govLiveReadAt=now;govLiveRead()end end
@@ -1707,12 +1766,22 @@ advHost={
  autoSave=function()return saveMode==2 end,save=function(statecb)rf2.mspQueue:add({command=250,processReply=function()statecb('SAVED TO FC EEPROM')end,errorHandler=function()statecb('SAVE FAILED - DISARM FC')end})end
 }
 function ensureAdvanced()if type(advanced)=='table'then return end;local c=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/advanced.lua'));local factory=c();c=nil;advanced=factory(advHost);factory=nil;collectgarbage()end
+rfFastGraphicsFactory=nil
+function rfAttachFastGraphics(h)
+ if not rfFastGraphicsFactory then rfFastGraphicsFactory=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/fastGraphics.lua'))()end
+ if lcd.drawCircle then h.circle=function(x,y,r,c,filled)
+  if filled and(sx(r)~=sy(r)or not lcd.drawFilledCircle)then for dy=-r,r do local dx=math.floor(math.sqrt(math.max(0,r*r-dy*dy)));h.fill(x-dx,y+dy,dx*2+1,1,c)end;return end
+  if sx(r)~=sy(r)then for n=0,31 do local a=n*math.pi/16;local b=(n+1)*math.pi/16;h.line(x+r*math.cos(a),y+r*math.sin(a),x+r*math.cos(b),y+r*math.sin(b),c)end;return end
+  if filled and lcd.drawFilledCircle then lcd.drawFilledCircle(sx(x),sy(y),sx(r),col(c))else lcd.drawCircle(sx(x),sy(y),sx(r),col(c))end
+ end end
+ rfFastGraphicsFactory(h)
+end
 easyServo=nil
 rfEasyServoReturn=false
 function ensureEasyServo()
  if easyServo then return end
  easyServo=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/centerTrim.lua'))()({
-  header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
+  fastGraphics=rfAttachFastGraphics,header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
   clearHits=function()hit={}end,
   coords=function(x,y)return x*800/(LCD_W or W),y*480/(LCD_H or H)end,
   ready=function()return rfReady end,servos=function()return servoApi end,mixer=function()return mixerApi end,
@@ -1734,7 +1803,7 @@ easyTail=nil
 function ensureEasyTail()
  if easyTail then return end
  easyTail=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/easyTail.lua'))()({
-  header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,
+  fastGraphics=rfAttachFastGraphics,header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,
   line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
   hit=add,clearHits=function()hit={}end,
   coords=function(x,y)return x*800/(LCD_W or W),y*480/(LCD_H or H)end,
@@ -1748,7 +1817,7 @@ easyMainRotor=nil
 function ensureEasyMainRotor()
  if easyMainRotor then return end
  easyMainRotor=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/easyMainRotor.lua'))()({
-  header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
+  fastGraphics=rfAttachFastGraphics,header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
   clearHits=function()hit={}end,ready=function()return rfReady end,mixer=function()return mixerApi end,
   back=function()page='easyServo';easyServo.open()end
  })
@@ -1757,7 +1826,7 @@ easyGeometry=nil
 function ensureEasyGeometry()
  if easyGeometry then return end
  easyGeometry=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/easyGeometry.lua'))()({
-  header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
+  fastGraphics=rfAttachFastGraphics,header=header,footer=footer,fill=fill,box=box,txt=txt,button=button,line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
   clearHits=function()hit={}end,coords=function(x,y)return x*800/(LCD_W or W),y*480/(LCD_H or H)end,
   ready=function()return rfReady end,mixer=function()return mixerApi end,disable=disableOverrides,editing=function()return numEdit~=nil end,
   number=function(key,value,min,max)beginNumber('easyGeometry',key,value,min,max);numEdit.decimals=1;numEdit.text=string.format('%.1f',value)end,

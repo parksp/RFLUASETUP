@@ -1,11 +1,9 @@
-RFLUASETUP 0.7.123 BETA Installation
+RFLUASETUP 0.7.125 BETA Installation
 
-1. Download RFLUASETUP-0.7.123-SERVO-SAVE-VERIFY.zip from the GitHub release.
-2. Keep a PC Configurator backup of the FC settings and a backup of the radio script.
-3. Extract the ZIP. Copy the contents of SD-CARD to the radio SD card, replacing the existing script files.
-4. Start RFLUASETUP and check that the footer says 0.7.123 BETA.
-5. Easy Setup center trim: OVERRIDE ALL (or selected servos), adjust position, CENTER APPLY, then CONFIRM & SAVE. The measured FC output PWM becomes the center pulse.
+Download the current release ZIP. Back up your previous script. Copy all contents of SD-CARD to the transmitter SD card, including PAGESX/fastGraphics.lua and attitudeHeli.lua. Verify 0.7.125 BETA in the footer.
 
-APPLY MISMATCH / NOT SAVED means this transaction did not send EEPROM; temporary RAM values may already differ. EEPROM SENT / VERIFY FAILED means the save acknowledged but readback did not match; some values may be saved. The footer identifies the servo, field and expected/actual values. Check against the PC Configurator if a mismatch persists.
+Improvements: solid 3D model, faster graphics, straight rear view after RESET Z, dedicated attitude/receiver reads and optimized Easy Setup drawings. Receiver targets 100ms channel reads and 1s analog/RSSI reads; actual rates depend on the link.
 
-See RELEASE-0.7.123.md and docs/AUDIT-0.7.123.md for scope, tests and limitations. Nine separate prior Full Setup findings remain unresolved. Preliminary user feedback suggests center saving works; complete hardware and firmware validation is not claimed. TX16S MK2 units may show clipped UI elements.
+Easy Setup is nearing completion and has received further updates. Users already familiar with Rotorflight should be able to get close to their intended helicopter setup through the current Easy Setup workflow.
+
+See RELEASE-0.7.125.md, INSTALL-0.7.125.txt and docs/AUDIT-0.7.125.md for detail. Prior separate Full Setup audit findings remain unresolved.

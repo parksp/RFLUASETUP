@@ -1,5 +1,6 @@
 -- Standalone center-trim workflow. All output changes require fresh DISARM status.
 return function(h)
+ if h.fastGraphics then h.fastGraphics(h)end
  local M={}
  local page='menu'
  local cfg,enabled,angles={},{},{}
@@ -379,6 +380,7 @@ return function(h)
   h.button('ct'..n,label,x,y,w,ht,not edit and focus==n,a,color or'cyan')
  end
  local function disc(x,y,color)
+  if h.circle then h.circle(x,y,11,color,true);return end
   for dy=-11,11 do local dx=math.floor(math.sqrt(121-dy*dy));h.fill(x-dx,y+dy,dx*2+1,1,color)end
  end
  local function litButton(label,x,y,w,ht,key,index,on)
@@ -392,7 +394,7 @@ return function(h)
  end
  local function miniSwash(cx,cy,isFront)
   local r=52
-  for n=0,31 do local a=n*math.pi/16;local b=(n+1)*math.pi/16;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'muted')end
+  if h.circle then h.circle(cx,cy,r,'muted',false)else for n=0,31 do local a=n*math.pi/16;local b=(n+1)*math.pi/16;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'muted')end end
   local aa=isFront and{-90,30,150}or{90,210,330}
   for i=1,3 do local a=aa[i]*math.pi/180;local x,y=cx+r*math.cos(a),cy+r*math.sin(a);h.line(cx,cy,x,y,'cyan');h.txt(x-8,y-7,'S'..i,'text')end
   nose(cx+96,cy-20)
@@ -475,7 +477,7 @@ return function(h)
   if not ready then h.txt(30,160,'Connect FC. RTN and reopen to retry.','text');return end
   h.fill(20,104,596,334,'panel')
   local cx,cy,r=315,260,154
-  for n=0,63 do local a=n*math.pi/32;local b=(n+1)*math.pi/32;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'muted')end
+  if h.circle then h.circle(cx,cy,r,'muted',false)else for n=0,63 do local a=n*math.pi/32;local b=(n+1)*math.pi/32;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'muted')end end
   local aa=front and{-90,30,150}or{90,210,330}
   -- Each servo has its own 100px card: selection, live pulse, then direction.
   -- Keep pulse text outside every action hitbox for both mounting orientations.

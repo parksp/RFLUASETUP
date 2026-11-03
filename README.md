@@ -1,10 +1,10 @@
 # RFLUASETUP
 
-> **2026-10-29: Latest release / 최신 버전: 0.7.123 BETA.** Easy Setup servo-center save verification and save failure handling updated. Easy Setup 서보 센터 저장 검증 및 실패 처리를 수정했습니다. Separate Full Setup audit findings remain unresolved.
+> **2026-11-04: Latest release / 최신 버전: 0.7.125 BETA.** Improved 3D helicopter model and faster graphics / 3D 헬기 모델 개선 및 화면 속도 개선.
 >
-> [Download 0.7.123 BETA](release/RFLUASETUP-0.7.123-SERVO-SAVE-VERIFY.zip) · [변경 내용 / Notes](RELEASE-0.7.123.md) · [전체 저장 경로 감사 / Audit](docs/SAVE-PATH-AUDIT-2026-10-25.md)
+> [Download 0.7.125 BETA](release/RFLUASETUP-0.7.125-FAST-SETUP-GRAPHICS.zip) · [변경 내용 / Notes](RELEASE-0.7.125.md) · [전체 저장 경로 감사 / Audit](docs/SAVE-PATH-AUDIT-2026-10-25.md)
 >
-> **Updated / 업데이트: 2026-10-29 (KST)**
+> **Updated / 업데이트: 2026-11-04 (KST)**
 
 
 [English](#english) · [한국어](#한국어)
@@ -13,9 +13,16 @@
 
 RFLUASETUP is an EdgeTX transmitter Lua interface developed from the menus and configuration workflow of Rotorflight Configurator 2.3.0. The goal is to make as much of the Configurator as practical available directly from the transmitter.
 
-Current version: **0.7.123 BETA — updated October 29, 2026 (KST)**. Includes Easy Setup center-save verification, board/ACC save failure handling, the 586-entry helicopter catalogue and existing motor-save isolation. Preliminary user feedback suggests center saving works. **Nine separate Full Setup audit findings remain unresolved; hardware validation is incomplete.**
+Current version: **0.7.125 BETA — updated November 4, 2026 (KST)**. Improved solid 3D helicopter model, faster graphics, dedicated attitude/receiver updates and optimized Easy Setup drawings. Earlier center-save verification and catalogue data are retained. **Nine separate Full Setup audit findings remain unresolved; validation is incomplete.**
 
-[Download 0.7.123 BETA](https://github.com/parksp/RFLUASETUP/releases/download/v0.7.123-beta/RFLUASETUP-0.7.123-SERVO-SAVE-VERIFY.zip) · [Bilingual release notes](RELEASE-0.7.123.md)
+[Download 0.7.125 BETA](https://github.com/parksp/RFLUASETUP/releases/download/v0.7.125-beta/RFLUASETUP-0.7.125-FAST-SETUP-GRAPHICS.zip) · [Bilingual release notes](RELEASE-0.7.125.md)
+
+### 3D model and speed improvements
+
+- A solid 3D helicopter with native drawing and reusable coordinates.
+- RESET Z selects the straight rear hovering view.
+- Dedicated Receiver channel updates and optimized Easy Setup graphics.
+- The user confirmed noticeably faster operation on the transmitter.
 
 ### Motors: aircraft gearing and motor pole catalogue
 
@@ -25,6 +32,8 @@ Current version: **0.7.123 BETA — updated October 29, 2026 (KST)**. Includes E
 
 ### Easy Setup progress
 
+Easy Setup is nearing completion and has received further updates. Users already familiar with Rotorflight should be able to get close to their intended helicopter setup through the current Easy Setup workflow.
+
 - Main Rotor Geometry: independent axis overrides, calibration and swash trim. RETURN restores unsaved values.
 - Motor + Gear Ratio Input: Easy Setup step 5 opens the shared Full Setup Motors menu.
 - Tail Setup: servo/motor tail defaults and rotor settings, single-press override ON/OFF and a horizontal slider. RETURN → DISCARD restores unsaved live edits.
@@ -32,7 +41,7 @@ Current version: **0.7.123 BETA — updated October 29, 2026 (KST)**. Includes E
 - Swash servo defaults: 1520/760 pulse presets, Rate/Speed, per-servo Reverse, Limits/Scale/Geo, with an overwrite warning and confirmation before saving.
 - Servo reverse and center-pulse trim: FRONT/REAR choice, measured output pulses and confirmed Center Apply. Saves verify FC values before/after EEPROM and identify persistent mismatches.
 - Keep overrides enabled while trimming any green-selected S1/S2/S3 subset; red servos hold their current positions. ALL selection and AILERON/ELEVATOR trim are available.
-- Later Easy Setup stages are not complete. **This release is not a finished, flight-validated setup solution.**
+- Easy Setup is in its final development stage. Final refinements and complete flight validation remain.
 
 Current changes were checked with a simulated FC, Lua event tests, rendered screens and syntax checks. They are not fully validated on physical aircraft/transmitters. Disconnect the motor and remove blades for bench testing; check manufacturer servo specifications and compare settings with the PC Configurator.
 
@@ -51,7 +60,7 @@ Development is primarily based on NEXUS XR, using RadioMaster TX16S MK3 with the
 
 Validation across other transmitters, display sizes, FCs, receivers, telemetry protocols and firmware versions remains incomplete, including the partially checked FlyDragon and Matek units. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
 
-See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.123.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
+See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.125.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
 
 ## Main Areas
 
@@ -81,6 +90,8 @@ Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 ## 한국어
 
+Easy Setup은 이제 거의 마무리 단계이며, 추가 업데이트를 적용했습니다. 기존 Rotorflight 사용자라면 현재 Easy Setup 흐름으로 원하는 기체 설정에 상당히 근접할 수 있을 것으로 기대합니다.
+
 ### 모터: 기체별 기어비 및 제조사별 모터 폴수
 
 - MOTOR 항목에서 **헬기 제조사 → 기체 모델**을 선택해 메인·테일 기어비와 확인된 피니언·풀리 옵션을 조회할 수 있습니다. **20개 제조사 / 586개 모델·버전**을 수록했으며, **제조사 문서 478개·판매처 참고 3개·수동 입력 105개**를 구분합니다.
@@ -91,9 +102,9 @@ Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식을 분석하여 EdgeTX 조종기용 Lua 인터페이스로 구현한 프로젝트입니다. 가능한 한 많은 Configurator 기능을 PC 없이 조종기에서 확인하고 설정할 수 있도록 만드는 것이 목표입니다.
 
-현재 버전은 **0.7.123 BETA — 2026년 10월 29일(KST) 업데이트**입니다. Easy Setup 센터 저장 검증, 보드 정렬·ACC Trim 저장 실패 처리, 586개 헬기 카탈로그와 기존 모터 저장 경로 수정을 포함합니다. 센터 저장에 대한 사용자 초기 확인을 받았습니다. **Full Setup의 별도 9개 감사 문제는 미해결이며 전체 실물 검증은 완료되지 않았습니다.**
+현재 버전은 **0.7.125 BETA — 2026년 11월 4일(KST) 업데이트**입니다. 3D 헬기 모델과 화면 속도를 개선하고, 자세·Receiver 전용 조회와 Easy Setup 그림 최적화를 적용했습니다. 기존 센터 저장 검증과 카탈로그 자료는 유지합니다. **Full Setup의 별도 감사 문제 9개는 미해결이며 전체 검증은 완료되지 않았습니다.**
 
-[0.7.123 BETA 다운로드 / Download](https://github.com/parksp/RFLUASETUP/raw/refs/heads/main/release/RFLUASETUP-0.7.123-SERVO-SAVE-VERIFY.zip) · [한글·영문 변경 안내 / Bilingual release notes](RELEASE-0.7.123.md)
+[0.7.125 BETA 다운로드 / Download](https://github.com/parksp/RFLUASETUP/raw/refs/heads/main/release/RFLUASETUP-0.7.125-FAST-SETUP-GRAPHICS.zip) · [한글·영문 변경 안내 / Bilingual release notes](RELEASE-0.7.125.md)
 
 ### Easy Setup 진행 상황
 
@@ -103,7 +114,7 @@ RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식�
 - 스와쉬 서보 기본값: 1520/760 펄스, Rate/Speed, 개별 Reverse, Limits/Scale/Geo 편집 및 저장 전 경고·확인.
 - 서보 리버스·센터 펄스 트림: FRONT/REAR 선택, 기수 방향 표시, 실제 출력 펄스 확인, Center Apply 확인 후 저장.
 - 오버라이드를 유지하면서 초록색으로 선택한 S1/S2/S3 조합만 트림. 빨간색 서보는 현재 위치 유지. ALL 선택과 AILERON/ELEVATOR 조정 지원.
-- Easy Setup의 이후 단계는 아직 완성되지 않았습니다. **전체 설정·비행 준비 완료를 보장하지 않습니다.**
+- Easy Setup은 마무리 단계이며 최종 다듬기와 전체 기능·비행 검증이 남아 있습니다.
 
 이번 변경은 모의 FC, Lua 이벤트, 화면 렌더와 문법 검사로 확인했습니다. 실제 기체·조종기의 모든 기능을 검증한 것은 아닙니다. 모터 연결과 블레이드를 분리하고, 제조사 서보 사양 및 PC Configurator 값과 대조하여 시험하세요.
 
@@ -112,7 +123,7 @@ RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식�
 
 ### Easy Setup — 0.6.91 BETA
 
-사용자가 제공한 0.6.91 BETA 실제 조종기 화면입니다. Easy Setup은 서보 센터 설정까지 구현된 미완성 중간 단계입니다. 사진에 표시된 펄스값은 해당 기체의 예시이며 권장 설정값이 아닙니다.
+사용자가 제공한 이전 0.6.91 BETA 실제 조종기 화면입니다. 사진은 당시 서보 센터 설정까지 구현했던 중간 버전을 보여주며 현재 화면과 다를 수 있습니다. 사진에 표시된 펄스값은 해당 기체의 예시이며 권장 설정값이 아닙니다.
 
 User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup remains unfinished, implemented through servo center setup. Pulse values shown belong to the photographed setup; they are not recommended defaults.
 
@@ -124,7 +135,7 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 
 ### 이전 화면 / Earlier screens — 0.6.33 BETA
 
-아래 사진은 **이전 0.6.33 BETA**를 RadioMaster TX16S MK3에서 실행한 실제 화면입니다. 현재 0.7.123의 Easy Setup 화면과는 다를 수 있습니다.
+아래 사진은 **이전 0.6.33 BETA**를 RadioMaster TX16S MK3에서 실행한 실제 화면입니다. 현재 0.7.125의 Easy Setup 화면과는 다를 수 있습니다.
 
 | 메인 화면 / Main screen | 3D 헬리콥터 자세 / 3D Helicopter Attitude |
 |---|---|
@@ -156,7 +167,7 @@ NEXUS XR을 우선 기준으로 개발했으며, 다른 호환 FC에서도 구�
 
 ## 검증 범위
 
-- 개발 중인 미완성 BETA이며 Easy Setup은 Geometry·Tail Setup까지 구현한 중간 단계입니다.
+- 개발 중인 BETA이며 Easy Setup은 마무리 단계입니다. 보드 정렬·Receiver·서보/스와쉬·Geometry·Tail·모터/기어비 흐름을 포함합니다.
 - 장기간 실제 운용이나 다양한 기체 조합의 검증은 아직 진행되지 않았습니다.
 - 최신 변경은 모의 FC의 읽기/쓰기, 확인 후 저장, 다중 선택 트림, 오류 처리와 화면 검사로 확인했습니다. 실기 검증은 별도로 필요합니다.
 - 우선 개발·시험 기준은 **RadioMaster TX16S MK3의 현재 EdgeTX 환경**과 **NEXUS XR의 현재 Rotorflight 4.6.x 펌웨어** 조합입니다. **FlyDragon·Matek 자이로/FC도 일부 확인**했으며 전체 검증은 미완료입니다.
@@ -171,6 +182,6 @@ NEXUS XR을 우선 기준으로 개발했으며, 다른 호환 FC에서도 구�
 3. 최종 경로가 `/SCRIPTS/RFLUASETUP/main.lua`인지 확인합니다.
 4. 기존 버전이 있다면 폴더 전체를 교체합니다. 서로 다른 버전의 파일을 섞지 마십시오.
 5. EdgeTX를 재시작하고 시스템 또는 TOOLS 페이지에서 RFLUASETUP을 실행합니다.
-6. 상단의 `FC LINK`와 하단의 `0.7.123 BETA`를 확인합니다.
+6. 상단의 `FC LINK`와 하단의 `0.7.125 BETA`를 확인합니다.
 
-자세한 내용은 [한국어 설치 안내](설치방법.txt)와 [최신 한글·영문 변경 안내](RELEASE-0.7.123.md)를 참고하십시오. [0.6.33 한국어 사용자 매뉴얼](docs/RFLUASETUP-0.6.33-한국어-사용자-매뉴얼.docx)은 이전 버전 참고용입니다.
+자세한 내용은 [한국어 설치 안내](설치방법.txt)와 [최신 한글·영문 변경 안내](RELEASE-0.7.125.md)를 참고하십시오. [0.6.33 한국어 사용자 매뉴얼](docs/RFLUASETUP-0.6.33-한국어-사용자-매뉴얼.docx)은 이전 버전 참고용입니다.
