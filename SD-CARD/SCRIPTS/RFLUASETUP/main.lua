@@ -1,5 +1,5 @@
 -- RF SETUP HELI 0.2.0 - reviewed UI shell for TX16S / EdgeTX
-local VERSION="0.7.125 BETA"
+local VERSION="0.7.129 BETA"
 local page="home"
 local selected=1
 local scroll=1
@@ -949,14 +949,15 @@ function statusAngleDelta(a,b)
 end
 rfAttitudeMesh=nil
 statusHeliViewYaw=nil
-function drawStatusHeli(cx,cy,viewScale)
+function drawStatusHeli(cx,cy,viewScale,pose)
  if not rfAttitudeMesh then
   rfAttitudeMesh=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/attitudeHeli.lua'))()({
    line=function(x1,y1,x2,y2,c)if lcd.drawLine then lcd.drawLine(sx(x1),sy(y1),sx(x2),sy(y2),SOLID or 0,col(c))end end,
    triangle=lcd.drawFilledTriangle and function(x1,y1,x2,y2,x3,y3,c)lcd.drawFilledTriangle(sx(x1),sy(y1),sx(x2),sy(y2),sx(x3),sy(y3),col(c))end or nil
   })
  end
- rfAttitudeMesh.draw(cx,cy,viewScale,statusLive.roll,statusLive.pitch,statusLive.yaw,statusYawOffset,statusHeliViewYaw)
+ local v=pose or statusLive
+ rfAttitudeMesh.draw(cx,cy,viewScale,v.roll,v.pitch,v.yaw,pose and pose.offset or statusYawOffset,pose and pose.viewYaw or statusHeliViewYaw,pose and pose.rotation or nil)
 end
 function statusResetZ()
  statusYawOffset=statusLive.yaw or 0;statusHeliViewYaw=math.pi;statusLive.state='Z AXIS OFFSET RESET'
@@ -992,7 +993,7 @@ end
 rxSel=2;rxScroll=1;rxState='NOT READ';rxProtocolUnlocked=false;rxTelemetryUnlocked=false;rxWarning=nil;rxRows={};rxFeature=0
 rxConfig={provider=9,inverted=0,half=0,pulseMin=885,pulseMax=2115,spi=0,spiId=0,spiCount=0,pinswap=0}
 rxRc={center=1500,deflection=510,arm=0,minThrottle=0,maxThrottle=0,deadband=5,yawDeadband=5};rxMap={0,1,2,3,4,5,6,7};rxRssi={channel=0,scale=100,invert=0,offset=0}
-rxTelem={inverted=0,half=0,mask=0,pinswap=0,crsfMode=0,rate=0,ratio=0,list={}};rxTelemView='SELECT';rxTelemGroupOpen=nil;rxAssignmentOpen=false;rxPreviewZero={0,0,0,0};rxReading=false
+rxTelem={inverted=0,half=0,mask=0,pinswap=0,crsfMode=0,rate=0,ratio=0,list={}};rxTelemView='SELECT';rxTelemGroupOpen=nil;rxAssignmentOpen=false;rxPreviewPose={roll=0,pitch=0,yaw=0,offset=0,viewYaw=math.pi};rxReading=false
 rxProtocols={{'None',0,-1},{'TBS CRSF',9,3},{'Futaba S.BUS',2,3},{'Futaba S.BUS2',15,3},{'FrSky F.PORT',12,3},{'FrSky F.PORT2',16,3},{'FrSky FBUS',17,3},{'Spektrum DSM/1024',0,3},{'Spektrum DSM/2048',1,3},{'Spektrum DSM/SRXL',10,3},{'Spektrum DSM/SRXL2',13,3},{'ImmersionRC GHOST',14,3},{'Graupner SUMD',3,3},{'Graupner SUMH',4,3},{'FlySky IBUS',7,3},{'FlySky IBUS2',19,3},{'JR XBUS Mode A',18,3},{'JR XBUS Mode B',5,3},{'JR XBUS/RJ01',6,3},{'Jeti EXBUS',8,3},{'CPPM',0,0},{'MSP',0,14}}
 rxNames={'ROLL','PITCH','YAW','COLLECTIVE','THROTTLE','AUX1','AUX2','AUX3','AUX4','AUX5','AUX6','AUX7','AUX8','AUX9','AUX10','AUX11'}
 rxPresets={{'ELRS',1},{'FrSky',2},{'Futaba / Hitec',3},{'Spektrum / Graupner / JR',4}}
@@ -1060,7 +1061,7 @@ function rxChoosePreset()openChoice('APPLY CHANNEL PRESET',rxPresets,1,function(
 function rxChooseRssi()local items={{'AUTO',0},{'ADC',1}};for i=1,11 do items[#items+1]={'AUX'..i,i+5}end;openChoice('SELECT RSSI SOURCE',items,rxRssi.channel,function(v)if v==1 then rxFeature=bit32.bor(rxFeature,bit32.lshift(1,15));rxRssi.channel=0 else rxFeature=bit32.band(rxFeature,bit32.bnot(bit32.lshift(1,15)));rxRssi.channel=v end;rxWriteFeature();rxWriteRssi();rxBuildRows()end)end
 function rxChooseSensor(slot)local items={};for i,n in ipairs(rxSensorNames)do items[i]={n,i-1}end;openChoice('SELECT TELEMETRY SENSOR '..slot,items,(rxTelem.list[slot]or 0)+1,function(v)rxTelem.list[slot]=v;rxWriteTelem();rxBuildRows()end)end
 function rxSortSensor(slot)local items={{'MOVE UP',1},{'MOVE DOWN',2},{'REMOVE',3}};openChoice('SORT TELEMETRY SENSOR',items,1,function(v)if v==1 and slot>1 then rxTelem.list[slot],rxTelem.list[slot-1]=rxTelem.list[slot-1],rxTelem.list[slot]elseif v==2 and slot<40 then rxTelem.list[slot],rxTelem.list[slot+1]=rxTelem.list[slot+1],rxTelem.list[slot]elseif v==3 then table.remove(rxTelem.list,slot);rxTelem.list[40]=0 end;rxWriteTelem();rxBuildRows()end)end
-function rxActivate(i)local r=rxRows[i];if not r or r[1]=='section'or r[1]=='livechannel'then return end;rxSel=i;if r[1]=='assignheader'then rxAssignmentOpen=not rxAssignmentOpen;rxBuildRows()elseif r[1]=='unlock'then rxWarning=r[3]elseif r[1]=='choice'then rxChooseProtocol()elseif r[1]=='toggle'then rxToggle(r[3])elseif r[1]=='number'then beginNumber('receiver',r[3],rxValue(r),r[4],r[5])elseif r[1]=='preset'then rxChoosePreset()elseif r[1]=='channel'then rxChooseChannel(r[3])elseif r[1]=='rssi'then rxChooseRssi()elseif r[1]=='group'then local gi=r[3];if rxTelemGroupOpen==gi then rxTelemGroupOpen=nil;rxState='TELEMETRY GROUP CLOSED'else rxTelemGroupOpen=gi;rxState='TELEMETRY GROUP OPEN' end;rxBuildRows()elseif r[1]=='sort'then rxSortSensor(tonumber(string.sub(r[3],5)))elseif r[1]=='mode'then rxTelemView=r[3];rxBuildRows()elseif r[1]=='preview'then page='receiverPreview'elseif r[3]=='read'then rxRead()elseif r[3]=='save'then rxSave()elseif r[3]=='back'then page='full' end end
+function rxActivate(i)local r=rxRows[i];if not r or r[1]=='section'or r[1]=='livechannel'then return end;rxSel=i;if r[1]=='assignheader'then rxAssignmentOpen=not rxAssignmentOpen;rxBuildRows()elseif r[1]=='unlock'then rxWarning=r[3]elseif r[1]=='choice'then rxChooseProtocol()elseif r[1]=='toggle'then rxToggle(r[3])elseif r[1]=='number'then beginNumber('receiver',r[3],rxValue(r),r[4],r[5])elseif r[1]=='preset'then rxChoosePreset()elseif r[1]=='channel'then rxChooseChannel(r[3])elseif r[1]=='rssi'then rxChooseRssi()elseif r[1]=='group'then local gi=r[3];if rxTelemGroupOpen==gi then rxTelemGroupOpen=nil;rxState='TELEMETRY GROUP CLOSED'else rxTelemGroupOpen=gi;rxState='TELEMETRY GROUP OPEN' end;rxBuildRows()elseif r[1]=='sort'then rxSortSensor(tonumber(string.sub(r[3],5)))elseif r[1]=='mode'then rxTelemView=r[3];rxBuildRows()elseif r[1]=='preview'then rxPreviewReset();page='receiverPreview'elseif r[3]=='read'then rxRead()elseif r[3]=='save'then rxSave()elseif r[3]=='back'then page='full' end end
 function drawRxWarning()hit={};fill(80,95,640,290,'panel');box(80,95,640,290,'red');fill(80,95,640,46,'red');txt(105,109,'WARNING: CONNECTION MAY BE LOST','text',true);txt(112,165,rxWarning=='protocol'and'Changing receiver protocol can stop all receiver input.'or'Changing telemetry can disconnect this Lua script.','orange',true);txt(112,205,'Confirm before showing and enabling these settings.','text');button('rxWarnNo','CANCEL',180,310,180,46,false,{kind='rxWarnNo'},'cyan');button('rxWarnYes','ALLOW CHANGES',420,310,200,46,false,{kind='rxWarnYes'},'red')end
 function rxJumpIndex(id)
  local fallback=1;for i,r in ipairs(rxRows)do if id==1 and r[1]=='section'and r[2]=='RECEIVER PROTOCOL'then return i elseif id==2 and r[1]=='section'and r[2]=='CHANNEL RANGE'then return i elseif id==3 and r[1]=='section'and r[2]=='TELEMETRY'then fallback=i;return i elseif id==4 and r[1]=='section'and string.sub(r[2],1,17)=='TELEMETRY SENSORS'then return i elseif id==5 and r[1]=='assignheader'then return i elseif id==6 and r[1]=='section'and r[2]=='STICK PREVIEW'then return i end end;if id==4 then return rxJumpIndex(3)end;return fallback
@@ -1077,11 +1078,38 @@ end
 function rxFunctionPwm(fn)return statusLive.rx[fn]or(fn==5 and 1000 or 1500)end
 function rxChannelPwm(ch)return rxFunctionPwm(rxAssigned(ch))end
 function rxStickPct(fn)local cen=rxRc.center or 1500;local def=math.max(1,rxRc.deflection or 500);return math.max(-100,math.min(100,(rxFunctionPwm(fn)-cen)*100/def))end
+-- The receiver picture is commanded stick motion, not measured FC attitude.
+-- Keep its camera and pose independent of the real-attitude display.
+rxPreviewController=nil
+function ensureRxPreview()
+ if not rxPreviewController then rxPreviewController=assert(loadScript('/SCRIPTS/RFLUASETUP/PAGESX/receiverPreview.lua'))()()end
+ rxPreviewPose.rotation=rxPreviewController.rotation
+end
+function rxPreviewReset()
+ ensureRxPreview();rxPreviewController.reset((getTime and getTime()or 0)/100)
+ rxPreviewPose.roll=0;rxPreviewPose.pitch=0;rxPreviewPose.yaw=0
+ rxPreviewPose.offset=0;rxPreviewPose.viewYaw=math.pi
+end
+function rxPreviewFresh()
+ local age=(getTime and getTime()or 0)-statusReceiverAt
+ return age>=0 and age<=100
+end
+function rxPreviewControl(fn)
+ local raw=rxFunctionPwm(fn)-(rxRc.center or 1500)
+ local deadband=fn==3 and(rxRc.yawDeadband or 5)or(rxRc.deadband or 5)
+ if math.abs(raw)<=deadband then return 0 end
+ return rxStickPct(fn)
+end
+function rxPreviewUpdate()
+ ensureRxPreview()
+ rxPreviewPose.rotation=rxPreviewController.update(rxPreviewControl(1),rxPreviewControl(2),rxPreviewControl(3),(getTime and getTime()or 0)/100,rxPreviewFresh())
+ return rxPreviewPose
+end
 function drawReceiverPreview()
- header('RECEIVER STICK PREVIEW',(statusLive.state=='LIVE'and(getTime and getTime()or 0)-statusReceiverAt<=100)and'LIVE'or'RX DATA STALE')
- local rr,pp,yy,cc=rxStickPct(1)-(rxPreviewZero[1]or 0),rxStickPct(2)-(rxPreviewZero[2]or 0),rxStickPct(3)-(rxPreviewZero[3]or 0),rxStickPct(4)-(rxPreviewZero[4]or 0);local orr,opp,oy=statusLive.roll,statusLive.pitch,statusLive.yaw;statusLive.roll=rr*.28;statusLive.pitch=pp*.28;statusLive.yaw=(statusYawOffset or 0)+yy*.9;statusCard(20,100,760,286,'TRANSMITTER CONTROLLED HELICOPTER','green');drawStatusHeli(400,248,1.35);statusLive.roll,statusLive.pitch,statusLive.yaw=orr,opp,oy
+ header('RECEIVER STICK PREVIEW',rxPreviewFresh()and'LIVE'or'RX DATA STALE')
+ local rr,pp,yy,cc=rxStickPct(1),rxStickPct(2),rxStickPct(3),rxStickPct(4);local pose=rxPreviewUpdate();statusCard(20,100,760,286,'TRANSMITTER CONTROLLED HELICOPTER','green');drawStatusHeli(400,248,1.35,pose)
  local vals={{'ROLL',rr,'cyan'},{'PITCH',pp,'orange'},{'YAW',yy,'green'},{'COL',cc,'purple'}};for i,v in ipairs(vals)do local x=36+(i-1)*185;txt(x,342,v[1]..' '..string.format('%+.0f%%',v[2]),v[3],true);fill(x,365,160,10,'bg');fill(x,365,160*(v[2]+100)/200,10,v[3]);fill(x+79,360,2,20,'text');box(x,365,160,10,'line')end
- button('rxPreviewReset','RESET',400,398,180,40,false,{kind='rxPreviewReset'},'orange');button('rxPreviewBack','< RECEIVER',600,398,180,40,false,{kind='rxPreviewBack'},'cyan');footer('RESET uses the current stick positions as the center reference.')
+ button('rxPreviewReset','RESET',400,398,180,40,false,{kind='rxPreviewReset'},'orange');button('rxPreviewBack','< RECEIVER',600,398,180,40,false,{kind='rxPreviewBack'},'cyan');footer('Hold stick: rotate / Center: hold attitude / RESET: rear view');txt(560,449,string.format('RX %dms  F %dms',math.max(0,(getTime and getTime()or 0)-statusReceiverAt)*10,rxPreviewController and rxPreviewController.frameMs or 0),'muted')
 end
 
 -- Failsafe: Rotorflight Configurator 2.3.0 layout, RF 4.6 / MSP 12.9
@@ -1560,7 +1588,7 @@ local function activate(a)
  if a.kind=='fsSet'then local d=fsData[a.channel];if d then beginNumber('failsafe','set'..a.channel,d.value,875,2125)end;return end
  if a.kind=='fsRow'then fsActivate(a.index);return end
  if a.kind=='rxQuick'then rxJump(a.value);return end
- if a.kind=='rxPreviewReset'then for i=1,4 do rxPreviewZero[i]=rxStickPct(i)end;return end
+ if a.kind=='rxPreviewReset'then rxPreviewReset();return end
  if a.kind=='rxPreviewBack'then page='receiver';return end
  if a.kind=='rxWarnNo'then rxWarning=nil;rxState='CHANGE CANCELLED';return end
  if a.kind=='rxWarnYes'then if rxWarning=='protocol'then rxProtocolUnlocked=true else rxTelemetryUnlocked=true end;rxWarning=nil;rxBuildRows();return end
@@ -1666,7 +1694,7 @@ local function run(event,touch)
  if advanced and(page=='rates'or page=='profiles'or page=='modes'or page=='adjustments'or page=='beeper'or page=='sensors'or page=='blackbox')and not numEdit and not choiceSelect and not help then event=advanced.event(event)or event end
  if page=='home'and rfReady then local now=getTime and getTime()or 0;if now-homeHwAt>=100 and not homeHwBusy and rf2.mspQueue:isProcessed()then homeHwAt=now;requestHomeHardware()end end
   if(page=='status'or page=='receiver'or page=='receiverPreview'or page=='statusAttitude'or page=='statusInstrument'or page=='configuration3d'or page=='easyTrim'or page=='easyReceiver')and rfReady then local now=getTime and getTime()or 0;if now-statusLiveAt>=((page=='receiver'or page=='receiverPreview'or page=='easyReceiver')and 10 or 20)and not statusLiveBusy and rf2.mspQueue:isProcessed()then statusLiveAt=now;requestStatusLive()end end
- if(page=='receiver'or page=='receiverPreview'or page=='easyReceiver')and rfReady then local now=getTime and getTime()or 0;if now-statusReceiverSlowAt>=100 and not statusLiveBusy and rf2.mspQueue:isProcessed()then rfRequestReceiverMeta()end end
+ if(page=='receiver'or page=='easyReceiver')and rfReady then local now=getTime and getTime()or 0;if now-statusReceiverSlowAt>=100 and not statusLiveBusy and rf2.mspQueue:isProcessed()then rfRequestReceiverMeta()end end
  if page=='power'and rfReady then local now=getTime and getTime()or 0;if now-pwLiveAt>=20 and not pwLiveBusy and rf2.mspQueue:isProcessed()then pwLiveAt=now;pwReadLive()end end
  if page=='governor'and rfReady then local now=getTime and getTime()or 0;if now-govRxAt>=10 and rf2.mspQueue:isProcessed()then govRxAt=now;rfGovReadThrottle()end end
  if page=='governor'and rfReady and not govDirty and not govCurveEdit and govCurveDrag==nil and not numEdit and not choiceSelect then local now=getTime and getTime()or 0;if now-govLiveReadAt>=100 and rf2.mspQueue:isProcessed()then govLiveReadAt=now;govLiveRead()end end

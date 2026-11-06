@@ -275,8 +275,8 @@ return function(h)
   end)
  end
  local function groupSigns()
-  -- FRONT reverses the prior lateral mapping; REAR mirrors the physical layout.
-  if mode=='AILERON'then return front and{[1]=-1,[2]=1}or{[1]=1,[2]=-1}end
+  -- S2 stays on the left and S3 on the right for both S1 mounting positions.
+  if mode=='AILERON'then return {[1]=1,[2]=-1}end
   -- Moving S1 from the nose to the tail reverses the physical pitch tilt.
   if mode=='ELEVATOR'then return front and{[0]=-1,[1]=1,[2]=1}or{[0]=1,[1]=-1,[2]=-1}end
   local signs={};for i in pairs(active)do if enabled[i]then signs[i]=1 end end;return signs
@@ -395,7 +395,7 @@ return function(h)
  local function miniSwash(cx,cy,isFront)
   local r=52
   if h.circle then h.circle(cx,cy,r,'muted',false)else for n=0,31 do local a=n*math.pi/16;local b=(n+1)*math.pi/16;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'muted')end end
-  local aa=isFront and{-90,30,150}or{90,210,330}
+  local aa=isFront and{-90,150,30}or{90,210,330}
   for i=1,3 do local a=aa[i]*math.pi/180;local x,y=cx+r*math.cos(a),cy+r*math.sin(a);h.line(cx,cy,x,y,'cyan');h.txt(x-8,y-7,'S'..i,'text')end
   nose(cx+96,cy-20)
  end
@@ -478,10 +478,10 @@ return function(h)
   h.fill(20,104,596,334,'panel')
   local cx,cy,r=315,260,154
   if h.circle then h.circle(cx,cy,r,'muted',false)else for n=0,63 do local a=n*math.pi/32;local b=(n+1)*math.pi/32;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'muted')end end
-  local aa=front and{-90,30,150}or{90,210,330}
+  local aa=front and{-90,150,30}or{90,210,330}
   -- Each servo has its own 100px card: selection, live pulse, then direction.
   -- Keep pulse text outside every action hitbox for both mounting orientations.
-  local positions=front and{{366,112,110},{480,322,136},{20,322,136}}
+  local positions=front and{{366,112,110},{20,322,136},{480,322,136}}
    or{{366,330,110},{20,112,136},{480,112,136}}
   for i=0,2 do
    local a=aa[i+1]*math.pi/180;local x,y=cx+r*math.cos(a),cy+r*math.sin(a)

@@ -1,29 +1,15 @@
-RFLUASETUP 0.7.125 BETA — FAST SETUP GRAPHICS + RECEIVER
+RFLUASETUP 0.7.129 BETA - SWASH SERVO FIX
 
-0.7.124 기반 업데이트입니다. 3D 모델과 화면 속도를 개선했습니다.
+ZIP의 SD-CARD 안 SCRIPTS 전체를 조종기 SD 카드에 복사하세요.
+하단 0.7.129 BETA를 확인하세요. GitHub 배포용 베타 설치본입니다.
 
-설치: ZIP의 SD-CARD 안 SCRIPTS 내용을 조종기 SD 카드의 SCRIPTS에 복사하세요.
-main.lua만 교체하지 마세요. 새 PAGESX/fastGraphics.lua도 필요합니다.
-하단 버전이 0.7.125 BETA인지 확인하세요. 이전 0.7.124 설치본은 보관하세요.
+0.7.128의 Preview 멈춤 수정 포함.
+Easy Setup과 Center Trim의 앞쪽 엘리베이터 그림을 수정했습니다.
+기수 위쪽 기준 S1은 앞/뒤 중심선, S2는 왼쪽, S3는 오른쪽입니다.
+Center Trim의 AILERON TRIM은 앞/뒤 선택에 관계없이 S2 + / S3 -로 동작합니다.
+ELEVATOR TRIM의 앞/뒤 동작은 유지합니다.
+기존 Center/Reverse/Limit 등의 저장값을 자동 교환하지 않습니다.
 
-변경:
-1. RESET Z AXIS: 현재 Yaw를 0으로 잡고, 호버링할 때 기체 뒤에서 보는 정후방
-   시점으로 맞춥니다. 테일이 관찰자 쪽, 기수가 앞쪽입니다. 롤/피치 수신값은 유지합니다.
-   카메라의 상하 관찰 방향도 위에서 살짝 내려다보는 방향으로 수정했습니다.
-2. Receiver / Receiver Preview / Easy Receiver:
-   채널 바를 MSP105만으로 0.1초 간격 목표로 갱신합니다.
-   RSSI/아날로그 정보는 별도 MSP110으로 1초 간격 목표로 갱신합니다.
-   정상 Status 화면의 기존 텔레메트리와 채널 매핑/저장 기능은 유지합니다.
-3. Board & Sensor Alignment: 점 사각형 반복 대신 native 선/삼각형/원을 사용합니다.
-   시험 기준 그림 호출 599회 -> 46회 (92.3% 감소).
-4. Servo center: 서보 원과 색상 점을 native 원/채운 원으로 그립니다.
-5. Main Rotor Direction / Geometry / Tail:
-   같은 그림의 좌표와 그리기 명령을 재사용합니다. 목표값/방향/모드가 변하면 갱신합니다.
-   조작 버튼과 터치 영역은 매번 정상 구성하며, 캐시에 설정값 쓰기나 통신은 넣지 않습니다.
-
-193개 Lua 문법, 서보 저장·오버라이드·방향 보존·테일·지오메트리 회귀,
-Receiver 100ms 요청/RSSI 분리, RESET Z, 화면 범위와 캐시 검사 통과.
-사용자로부터 반응 속도 개선 확인을 받았습니다. 전체 기능 검증 완료를 뜻하지는 않습니다.
-0.7.124의 속도 개선은 사용자 확인을 받았고, 별도 Full Setup 감사 문제 9개는 미해결입니다.
-
-Easy Setup은 이제 거의 마무리 단계이며, 추가 업데이트를 적용했습니다. 기존 Rotorflight 사용자라면 현재 Easy Setup 흐름으로 원하는 기체 설정에 상당히 근접할 수 있을 것으로 기대합니다.
+기존 파일을 백업하고 설치하세요. 모터 동력을 분리한 상태에서 그림과
+실제 서보 번호, 트림 이동 방향을 확인하세요. 실제 조종기 검증은 미완료입니다.
+공식 배치 참고: https://doc.rotorflight.org/stable/configurator/tabs/mixer/

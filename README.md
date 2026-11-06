@@ -1,21 +1,28 @@
 # RFLUASETUP
 
-> **2026-11-04: Latest release / 최신 버전: 0.7.125 BETA.** Improved 3D helicopter model and faster graphics / 3D 헬기 모델 개선 및 화면 속도 개선.
+> **2026-11-06: Latest release / 최신 버전: 0.7.129 BETA.** Swash servo layout and trim fix; Preview freeze recovery / 스와시 서보 배치·트림 및 Preview 멈춤 수정.
 >
-> [Download 0.7.125 BETA](release/RFLUASETUP-0.7.125-FAST-SETUP-GRAPHICS.zip) · [변경 내용 / Notes](RELEASE-0.7.125.md) · [전체 저장 경로 감사 / Audit](docs/SAVE-PATH-AUDIT-2026-10-25.md)
+> [Download 0.7.129 BETA](release/RFLUASETUP-0.7.129-SWASH-SERVO-FIX.zip) · [변경 내용 / Notes](RELEASE-0.7.129.md) · [전체 저장 경로 감사 / Audit](docs/SAVE-PATH-AUDIT-2026-10-25.md)
 >
-> **Updated / 업데이트: 2026-11-04 (KST)**
+> **Updated / 업데이트: 2026-11-06 (KST)**
 
 
 [English](#english) · [한국어](#한국어)
 
 ## English
 
+### 0.7.129 update
+
+- Easy Setup and Center Trim: S2 stays left and S3 stays right with either front or rear elevator placement. Front-placement aileron trim signs are corrected.
+- Includes 0.7.128 Receiver Preview pitch/freeze fixes. Existing saved servo values are not automatically swapped.
+- User confirmed the corrected operation on a transmitter; complete flight validation remains pending.
+
+
 RFLUASETUP is an EdgeTX transmitter Lua interface developed from the menus and configuration workflow of Rotorflight Configurator 2.3.0. The goal is to make as much of the Configurator as practical available directly from the transmitter.
 
-Current version: **0.7.125 BETA — updated November 4, 2026 (KST)**. Improved solid 3D helicopter model, faster graphics, dedicated attitude/receiver updates and optimized Easy Setup drawings. Earlier center-save verification and catalogue data are retained. **Nine separate Full Setup audit findings remain unresolved; validation is incomplete.**
+Current version: **0.7.129 BETA — updated November 6, 2026 (KST)**. Improved solid 3D helicopter model, faster graphics, dedicated attitude/receiver updates and optimized Easy Setup drawings. Earlier center-save verification and catalogue data are retained. **Nine separate Full Setup audit findings remain unresolved; validation is incomplete.**
 
-[Download 0.7.125 BETA](https://github.com/parksp/RFLUASETUP/releases/download/v0.7.125-beta/RFLUASETUP-0.7.125-FAST-SETUP-GRAPHICS.zip) · [Bilingual release notes](RELEASE-0.7.125.md)
+[Download 0.7.129 BETA](https://github.com/parksp/RFLUASETUP/releases/download/v0.7.129-beta/RFLUASETUP-0.7.129-SWASH-SERVO-FIX.zip) · [Bilingual release notes](RELEASE-0.7.129.md)
 
 ### 3D model and speed improvements
 
@@ -61,7 +68,7 @@ Development is primarily based on NEXUS XR, using RadioMaster TX16S MK3/MK2 with
 
 Validation across other transmitters, display sizes, FCs, receivers, telemetry protocols and firmware versions remains incomplete. FCs beyond the confirmed NEXUS XR and FlyDragon V2.2 include partially checked models such as Matek. Back up the FC with `dump` or `diff` before installation and close the PC Configurator connection while using the transmitter Lua tool.
 
-See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.125.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
+See [English installation](INSTALL-EN.txt) and [current bilingual release notes](RELEASE-0.7.129.md). The [0.6.33 English user manual](docs/RFLUASETUP-0.6.33-English-User-Manual.docx) and photographs specifically labeled 0.6.33 describe the older release and may not match current Easy Setup screens. The Easy Setup photos labeled 0.6.91 show an earlier release.
 
 ## Main Areas
 
@@ -91,6 +98,13 @@ Released under the GNU General Public License v3.0. See [LICENSE](LICENSE).
 
 ## 한국어
 
+### 0.7.129 업데이트
+
+- Easy Setup·Center Trim: 엘리베이터 앞/뒤 모두 S2 왼쪽·S3 오른쪽으로 표시하고 앞쪽 배치의 에일러론 트림 방향을 수정했습니다.
+- 0.7.128 Receiver Preview 피치 회전·멈춤 수정 포함. 기존 서보 저장값은 자동 교환하지 않습니다.
+- 사용자 조종기 동작 확인 완료. 전체 비행 검증은 미완료입니다.
+
+
 Easy Setup은 이제 거의 마무리 단계이며, 추가 업데이트를 적용했습니다. 기존 Rotorflight 사용자라면 현재 Easy Setup 흐름으로 원하는 기체 설정에 상당히 근접할 수 있을 것으로 기대합니다.
 
 ### 모터: 기체별 기어비 및 제조사별 모터 폴수
@@ -103,9 +117,9 @@ Easy Setup은 이제 거의 마무리 단계이며, 추가 업데이트를 적�
 
 RFLUASETUP은 Rotorflight Configurator 2.3.0의 메뉴 구성과 설정 방식을 분석하여 EdgeTX 조종기용 Lua 인터페이스로 구현한 프로젝트입니다. 가능한 한 많은 Configurator 기능을 PC 없이 조종기에서 확인하고 설정할 수 있도록 만드는 것이 목표입니다.
 
-현재 버전은 **0.7.125 BETA — 2026년 11월 4일(KST) 업데이트**입니다. 3D 헬기 모델과 화면 속도를 개선하고, 자세·Receiver 전용 조회와 Easy Setup 그림 최적화를 적용했습니다. 기존 센터 저장 검증과 카탈로그 자료는 유지합니다. **Full Setup의 별도 감사 문제 9개는 미해결이며 전체 검증은 완료되지 않았습니다.**
+현재 버전은 **0.7.129 BETA — 2026년 11월 4일(KST) 업데이트**입니다. 3D 헬기 모델과 화면 속도를 개선하고, 자세·Receiver 전용 조회와 Easy Setup 그림 최적화를 적용했습니다. 기존 센터 저장 검증과 카탈로그 자료는 유지합니다. **Full Setup의 별도 감사 문제 9개는 미해결이며 전체 검증은 완료되지 않았습니다.**
 
-[0.7.125 BETA 다운로드 / Download](https://github.com/parksp/RFLUASETUP/raw/refs/heads/main/release/RFLUASETUP-0.7.125-FAST-SETUP-GRAPHICS.zip) · [한글·영문 변경 안내 / Bilingual release notes](RELEASE-0.7.125.md)
+[0.7.129 BETA 다운로드 / Download](https://github.com/parksp/RFLUASETUP/raw/refs/heads/main/release/RFLUASETUP-0.7.129-SWASH-SERVO-FIX.zip) · [한글·영문 변경 안내 / Bilingual release notes](RELEASE-0.7.129.md)
 
 ### Easy Setup 진행 상황
 
@@ -136,7 +150,7 @@ User-provided photographs of 0.6.91 BETA running on a transmitter. Easy Setup re
 
 ### 이전 화면 / Earlier screens — 0.6.33 BETA
 
-아래 사진은 **이전 0.6.33 BETA**를 RadioMaster TX16S MK3에서 실행한 실제 화면입니다. 현재 0.7.125의 Easy Setup 화면과는 다를 수 있습니다.
+아래 사진은 **이전 0.6.33 BETA**를 RadioMaster TX16S MK3에서 실행한 실제 화면입니다. 현재 0.7.129의 Easy Setup 화면과는 다를 수 있습니다.
 
 | 메인 화면 / Main screen | 3D 헬리콥터 자세 / 3D Helicopter Attitude |
 |---|---|
@@ -184,6 +198,6 @@ NEXUS XR을 우선 기준으로 개발했으며, **NEXUS XR과 FlyDragon V2.2는
 3. 최종 경로가 `/SCRIPTS/RFLUASETUP/main.lua`인지 확인합니다.
 4. 기존 버전이 있다면 폴더 전체를 교체합니다. 서로 다른 버전의 파일을 섞지 마십시오.
 5. EdgeTX를 재시작하고 시스템 또는 TOOLS 페이지에서 RFLUASETUP을 실행합니다.
-6. 상단의 `FC LINK`와 하단의 `0.7.125 BETA`를 확인합니다.
+6. 상단의 `FC LINK`와 하단의 `0.7.129 BETA`를 확인합니다.
 
-자세한 내용은 [한국어 설치 안내](설치방법.txt)와 [최신 한글·영문 변경 안내](RELEASE-0.7.125.md)를 참고하십시오. [0.6.33 한국어 사용자 매뉴얼](docs/RFLUASETUP-0.6.33-한국어-사용자-매뉴얼.docx)은 이전 버전 참고용입니다.
+자세한 내용은 [한국어 설치 안내](설치방법.txt)와 [최신 한글·영문 변경 안내](RELEASE-0.7.129.md)를 참고하십시오. [0.6.33 한국어 사용자 매뉴얼](docs/RFLUASETUP-0.6.33-한국어-사용자-매뉴얼.docx)은 이전 버전 참고용입니다.

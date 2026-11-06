@@ -1,9 +1,11 @@
-RFLUASETUP 0.7.125 BETA Installation
+RFLUASETUP 0.7.129 BETA Installation
 
-Download the current release ZIP. Back up your previous script. Copy all contents of SD-CARD to the transmitter SD card, including PAGESX/fastGraphics.lua and attitudeHeli.lua. Verify 0.7.125 BETA in the footer.
+Download the current release ZIP. Back up your previous script. Copy all contents of SD-CARD to the transmitter SD card, including PAGESX/fastGraphics.lua and attitudeHeli.lua. Verify 0.7.129 BETA in the footer.
 
 Improvements: solid 3D model, faster graphics, straight rear view after RESET Z, dedicated attitude/receiver reads and optimized Easy Setup drawings. Receiver targets 100ms channel reads and 1s analog/RSSI reads; actual rates depend on the link.
 
 Easy Setup is nearing completion and has received further updates. Users already familiar with Rotorflight should be able to get close to their intended helicopter setup through the current Easy Setup workflow.
 
-See RELEASE-0.7.125.md, INSTALL-0.7.125.txt and docs/AUDIT-0.7.125.md for detail. Prior separate Full Setup audit findings remain unresolved.
+See RELEASE-0.7.129.md, INSTALL-0.7.129.txt and docs/AUDIT-0.7.129.md for detail. Prior separate Full Setup audit findings remain unresolved.
+
+0.7.129: Correct S2-left/S3-right front/rear diagrams and front-layout aileron center trim. Includes Preview freeze recovery. Copy the entire SCRIPTS folder; do not replace main.lua alone. Existing saved servo values are not swapped automatically.

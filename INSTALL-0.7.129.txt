@@ -1,0 +1,15 @@
+RFLUASETUP 0.7.129 BETA - SWASH SERVO FIX
+
+ZIP의 SD-CARD 안 SCRIPTS 전체를 조종기 SD 카드에 복사하세요.
+하단 0.7.129 BETA를 확인하세요. GitHub 배포용 베타 설치본입니다.
+
+0.7.128의 Preview 멈춤 수정 포함.
+Easy Setup과 Center Trim의 앞쪽 엘리베이터 그림을 수정했습니다.
+기수 위쪽 기준 S1은 앞/뒤 중심선, S2는 왼쪽, S3는 오른쪽입니다.
+Center Trim의 AILERON TRIM은 앞/뒤 선택에 관계없이 S2 + / S3 -로 동작합니다.
+ELEVATOR TRIM의 앞/뒤 동작은 유지합니다.
+기존 Center/Reverse/Limit 등의 저장값을 자동 교환하지 않습니다.
+
+기존 파일을 백업하고 설치하세요. 모터 동력을 분리한 상태에서 그림과
+실제 서보 번호, 트림 이동 방향을 확인하세요. 실제 조종기 검증은 미완료입니다.
+공식 배치 참고: https://doc.rotorflight.org/stable/configurator/tabs/mixer/

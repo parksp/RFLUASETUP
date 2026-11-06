@@ -496,9 +496,9 @@ return function(h)
   h.fill(20,160,360,190,'panel');h.txt(30,165,'HELI FRONT ^','cyan')
   local cx,cy,r=196,257,52
   for n=0,47 do local a=n*math.pi/24;local b=(n+1)*math.pi/24;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'cyan')end
-  local aa=front and{-90,30,150}or{90,210,330}
+  local aa=front and{-90,150,30}or{90,210,330}
   for i=0,2 do local a=aa[i+1]*math.pi/180;h.line(cx,cy,cx+r*math.cos(a),cy+r*math.sin(a),(allMode or active==i)and'orange'or'cyan')end
-  local pos=front and{{155,189},{257,264},{31,264}}or{{155,297},{31,195},{257,195}}
+  local pos=front and{{155,189},{31,264},{257,264}}or{{155,297},{31,195},{257,195}}
   for i=0,2 do local x,y=pos[i+1][1],pos[i+1][2];local d=draft[i]
    if step==3 then btn('S'..(i+1)..' REV '..(bit32.band(d.flags.value,1)~=0 and'ON'or'OFF'),x,y,112,28,'reverse',i)
    elseif step==4 then btn('S'..(i+1)..' TRIM',x,y,112,28,'select',i)
@@ -517,7 +517,7 @@ return function(h)
   h.fill(20,102,598,300,'panel')
   local cx,cy,r=125,155,46
   for n=0,47 do local a=n*math.pi/24;local b=(n+1)*math.pi/24;h.line(cx+r*math.cos(a),cy+r*math.sin(a),cx+r*math.cos(b),cy+r*math.sin(b),'muted')end
-  local arms=front and{-90,30,150}or{90,210,330}
+  local arms=front and{-90,150,30}or{90,210,330}
   for i=0,2 do
    local a=arms[i+1]*math.pi/180;local x,y=cx+r*math.cos(a),cy+r*math.sin(a)
    h.line(cx,cy,x,y,'cyan')

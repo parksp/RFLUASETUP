@@ -44,11 +44,11 @@ return function(h)
  quad(point(-5,-122,43),point(2,-122,43),point(5,122,43),point(-2,122,43),'muted')
  local last={};local function delta(a,b)local d=a-b;return(d+180)%360-180 end
  local function farther(a,b)return a[6]<b[6]end
- function M.draw(cx,cy,scale,roll,pitch,yaw,offset,viewYaw)
+ function M.draw(cx,cy,scale,roll,pitch,yaw,offset,viewYaw,rotation)
   roll,pitch,yaw,offset=roll or 0,pitch or 0,yaw or 0,offset or 0
-  if last.cx~=cx or last.cy~=cy or last.scale~=scale or last.offset~=offset or last.viewYaw~=viewYaw or not last.roll or math.abs(roll-last.roll)>.3 or math.abs(pitch-last.pitch)>.3 or delta(yaw,last.yaw)~=0 then
+  if last.rotation~=rotation or last.rotationVersion~=(rotation and rotation.version)or last.cx~=cx or last.cy~=cy or last.scale~=scale or last.offset~=offset or last.viewYaw~=viewYaw or not last.roll or math.abs(roll-last.roll)>.3 or math.abs(pitch-last.pitch)>.3 or delta(yaw,last.yaw)~=0 then
    last.cx,last.cy,last.scale,last.offset,last.roll,last.pitch,last.yaw=cx,cy,scale,offset,roll,pitch,yaw
-   last.viewYaw=viewYaw
+   last.viewYaw=viewYaw;last.rotation=rotation;last.rotationVersion=rotation and rotation.version
    local r,p=roll*math.pi/180,-pitch*math.pi/180
    local v=(viewYaw or math.pi*.75)+delta(yaw,offset)*math.pi/180
    local cr,sr,cp,sp,cv,sv=math.cos(r),math.sin(r),math.cos(p),math.sin(p),math.cos(v),math.sin(v)
@@ -57,6 +57,11 @@ return function(h)
     local q=points[i];local x,y,z=q[1]+35,q[2],q[3]
     local y1,z1=y*cr-z*sr,y*sr+z*cr
     local x2,z2=x*cp+z1*sp,-x*sp+z1*cp
+    if rotation then
+     x2=rotation[1]*x+rotation[2]*y+rotation[3]*z
+     y1=rotation[4]*x+rotation[5]*y+rotation[6]*z
+     z2=rotation[7]*x+rotation[8]*y+rotation[9]*z
+    end
     local depth,side=x2*cv-y1*sv,x2*sv+y1*cv
     q[4],q[5],q[6]=cx+side*size,cy-(z2-depth*.26)*size,depth
    end
